@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Attendance Manager - Offline QR Attendance APK</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="stylesheet" href="style.css">
+  <!-- Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
+  <!-- HTML5 QR Code Scanner -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- QRCode.js for generating QR badges offline -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <i data-lucide="scan-line"></i>
+      </div>
+      <div>
+        <h1>Attendance Manager</h1>
+        <span>Guard QR & Offline Sync</span>
+      </div>
+    </div>
+    <div class="status-badges">
+      <span id="networkBadge" class="badge badge-online">
+        <i data-lucide="wifi"></i> <span id="networkText">Online</span>
+      </span>
+      <span id="syncBadge" class="badge badge-sync" style="display: none;" title="Tap to sync now" onclick="syncPendingRecords()">
+        <i data-lucide="cloud-upload"></i> <span id="pendingCount">0</span>
+      </span>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: GUARD SCANNER VIEW -->
+    <!-- ========================================== -->
+    <section id="tab-scanner" class="tab-pane active">
+      <div class="scanner-wrapper">
+        <div class="camera-header">
+          <h2><i data-lucide="camera" style="width: 18px; height: 18px;"></i> Guard Camera Scanner</h2>
+          <span id="scannerStatusText" style="font-size: 0.78rem; color: #4ade80;">Ready</span>
+        </div>
+
+        <div class="camera-viewfinder">
+          <div id="reader"></div>
+          <div class="scan-overlay" id="scanLaserOverlay"></div>
+        </div>
+
+        <div class="camera-controls">
+          <button id="btnToggleScanner" class="btn btn-primary" onclick="toggleCameraScanner()">
+            <i data-lucide="video"></i> <span id="btnCameraText">Start Camera</span>
+          </button>
+          <button id="btnSwitchCamera" class="btn btn-secondary" onclick="switchCamera()">
+            <i data-lucide="refresh-cw"></i> Flip
+          </button>
+          <button id="btnSimulateScan" class="btn btn-secondary" onclick="promptSimulatedScan()" title="Test scan an employee without camera">
+            <i data-lucide="qr-code"></i> Test Scan
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Scan Alert Card -->
+      <div id="feedbackCard" class="feedback-card">
+        <div class="feedback-header">
+          <div id="feedbackTitle" class="feedback-title">
+            <i id="feedbackIcon" data-lucide="check-circle-2"></i>
+            <span id="feedbackTitleText">Check-In Successful</span>
+          </div>
+          <span id="feedbackTimestamp" style="font-size: 0.78rem; color: var(--text-muted);">Just now</span>
+        </div>
+        <div class="feedback-body">
+          <div id="feedbackAvatar" class="emp-avatar">EM</div>
+          <div class="feedback-details">
+            <h3 id="feedbackEmpName">Employee Name</h3>
+            <p id="feedbackEmpDetails">EMP001 &bull; Engineering</p>
+            <div id="feedbackTimeChip" class="feedback-time-chip">In: 09:15 AM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Quick Summary -->
+      <div style="margin-top: 20px;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div id="statPresentCount" class="stat-value">0</div>
+            <div class="stat-label">Present Today</div>
+          </div>
+          <div class="stat-card">
+            <div id="statInsideCount" class="stat-value" style="color: #4ade80;">0</div>
+            <div class="stat-label">Inside Office</div>
+          </div>
+          <div class="stat-card">
+            <div id="statDepartedCount" class="stat-value" style="color: #fb923c;">0</div>
+            <div class="stat-label">Checked Out</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Scans Mini List -->
+      <div class="card">
+        <div class="card-header-flex">
+          <h3 class="card-title">Recent Gate Activity</h3>
+          <span style="font-size: 0.75rem; color: var(--text-muted);" id="todayDateLabel">Today</span>
+        </div>
+        <div id="recentScansList">
+          <p style="font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 12px;">No scans recorded yet today.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: EMPLOYEES & QR GENERATOR -->
+    <!-- ========================================== -->
+    <section id="tab-employees" class="tab-pane">
+      <div class="card-header-flex" style="margin-bottom: 14px;">
+        <div>
+          <h2 style="font-size: 1.15rem; font-weight: 700;">Employee Directory</h2>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Register staff & generate unique QR badges</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddEmployeeModal()">
+          <i data-lucide="user-plus"></i> Add Employee
+        </button>
+      </div>
+
+      <div class="form-group">
+        <input type="text" id="employeeSearchInput" class="input-control" placeholder="Search by name, ID or department..." oninput="renderEmployeeList()">
+      </div>
+
+      <div id="employeesListContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: ATTENDANCE LOGS -->
+    <!-- ========================================== -->
+    <section id="tab-logs" class="tab-pane">
+      <div class="card-header-flex" style="margin-bottom: 14px;">
+        <div>
+          <h2 style="font-size: 1.15rem; font-weight: 700;">Daily Attendance Logs</h2>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Track In/Out times and sync state</p>
+        </div>
+        <input type="date" id="logDateFilter" class="input-control" style="width: auto; padding: 6px 10px;" onchange="renderAttendanceLogs()">
+      </div>
+
+      <div id="attendanceLogsContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: SETTINGS & GOOGLE SHEET SYNC -->
+    <!-- ========================================== -->
+    <section id="tab-settings" class="tab-pane">
+      <div class="card">
+        <h3 class="card-title" style="margin-bottom: 12px;"><i data-lucide="sheet" style="color: #10b981;"></i> Google Sheet Integration</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">
+          Paste your Google Apps Script Web App URL below. When internet is active, all scan logs push directly into your Google Sheet!
+        </p>
+
+        <div class="form-group">
+          <label for="scriptUrlInput">Google Apps Script Webhook URL:</label>
+          <input type="url" id="scriptUrlInput" class="input-control" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" onclick="saveSettings()">
+            <i data-lucide="save"></i> Save URL
+          </button>
+          <button class="btn btn-secondary" onclick="testSheetConnection()">
+            <i data-lucide="radio"></i> Test Ping
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title" style="margin-bottom: 10px;"><i data-lucide="refresh-cw" style="color: #60a5fa;"></i> Offline Queue & Sync</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+          Pending offline records waiting to be pushed to Google Sheets: 
+          <b id="pendingRecordsText" style="color: #fbbf24;">0 records</b>
+        </p>
+
+        <button class="btn btn-success" onclick="syncPendingRecords()">
+          <i data-lucide="cloud-upload"></i> Push Pending Records Now
+        </button>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title" style="margin-bottom: 10px;"><i data-lucide="database"></i> Data Management</h3>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="btn btn-secondary" onclick="loadSampleEmployees()">
+            <i data-lucide="users"></i> Load 5 Sample Employees (For Instant Testing)
+          </button>
+          <button class="btn btn-secondary" onclick="exportAttendanceCSV()">
+            <i data-lucide="download"></i> Export Attendance as CSV File
+          </button>
+          <button class="btn btn-secondary" onclick="clearAllData()" style="color: #f87171;">
+            <i data-lucide="trash-2"></i> Reset Local Database
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ADD EMPLOYEE -->
+  <!-- ========================================== -->
+  <div id="addEmployeeModal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Register New Employee</h3>
+        <button class="close-btn" onclick="closeAddEmployeeModal()">&times;</button>
+      </div>
+      <form onsubmit="handleEmployeeSubmit(event)">
+        <div class="form-group">
+          <label for="empName">Full Name *</label>
+          <input type="text" id="empName" class="input-control" placeholder="e.g. Ramesh Sharma" required>
+        </div>
+        <div class="form-group">
+          <label for="empId">Employee ID *</label>
+          <input type="text" id="empId" class="input-control" placeholder="e.g. EMP101" required>
+        </div>
+        <div class="form-group">
+          <label for="empDept">Department / Role *</label>
+          <input type="text" id="empDept" class="input-control" placeholder="e.g. Security, Logistics, IT" required>
+        </div>
+        <div class="form-group">
+          <label for="empPhone">Phone Number</label>
+          <input type="tel" id="empPhone" class="input-control" placeholder="e.g. +91 9876543210">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+          <i data-lucide="check"></i> Register & Create QR
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: VIEW & PRINT QR BADGE -->
+  <!-- ========================================== -->
+  <div id="qrModal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Employee QR ID Card</h3>
+        <button class="close-btn" onclick="closeQrModal()">&times;</button>
+      </div>
+
+      <!-- Printable ID Card Section -->
+      <div class="qr-badge-card" id="printableQrBadge">
+        <div class="qr-company-name">ATTENDANCE PASS</div>
+        <div class="qr-card-title" id="badgeEmpName">John Doe</div>
+        
+        <div class="qr-canvas-container">
+          <div id="qrCodeContainer"></div>
+        </div>
+
+        <div class="qr-emp-details">
+          <div class="qr-emp-id" id="badgeEmpId">EMP001</div>
+          <div id="badgeEmpDept" style="color: #64748b;">Engineering</div>
+          <div id="badgeEmpPhone" style="color: #94a3b8; font-size: 0.75rem; margin-top: 2px;"></div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <button class="btn btn-primary" onclick="downloadQrBadgeImage()">
+          <i data-lucide="download"></i> Download QR
+        </button>
+        <button class="btn btn-secondary" onclick="window.print()">
+          <i data-lucide="printer"></i> Print ID Badge
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('scanner', this)">
+      <i data-lucide="scan-line"></i>
+      <span>Scan</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('employees', this)">
+      <i data-lucide="users"></i>
+      <span>Employees</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('logs', this)">
+      <i data-lucide="clipboard-list"></i>
+      <span>Logs</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('settings', this)">
+      <i data-lucide="settings"></i>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <!-- Audio Tone Synthesizer for Scan Feedback -->
+  <script src="app.js"></script>
+  <script>
+    // Initialize icons
+    lucide.createIcons();
+    // Register Service Worker for offline capability
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        console.log('Attendance Manager Service Worker registered', reg);
+      }).catch(err => {
+        console.warn('Service Worker registration skipped:', err);
+      });
+    }
+  </script>
+</body>
+</html>

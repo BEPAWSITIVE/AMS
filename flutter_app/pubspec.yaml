@@ -1,0 +1,27 @@
+name: attendance_manager
+description: "Offline-first QR Attendance APK for Guards & Employees with Google Sheets Sync"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  mobile_scanner: ^5.2.3
+  qr_flutter: ^4.1.0
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  http: ^1.2.2
+  connectivity_plus: ^6.0.5
+  intl: ^0.19.0
+  shared_preferences: ^2.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
