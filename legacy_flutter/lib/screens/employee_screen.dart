@@ -115,6 +115,13 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Image.asset(
+              'assets/logo.png',
+              height: 48,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 6),
             const Text(
               "ATTENDANCE PASS",
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: 1.2),

@@ -354,7 +354,22 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFFFF),
-        title: const Text("Guard QR Scanner", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.qr_code_scanner, color: Colors.blue),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text("Attendance Manager", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
         actions: [
           if (_hasCameraPermission) ...[
             IconButton(

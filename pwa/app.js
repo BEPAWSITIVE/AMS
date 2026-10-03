@@ -530,14 +530,21 @@ async function syncPendingRecords(isSilent = false) {
     };
 
     // Google Apps Script requires text/plain or no-cors handling for cross-origin web apps
-    const response = await fetch(scriptUrl, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "text/plain;charset=utf-8" }
-    });
-
-    const resultText = await response.text();
-    console.log("Google Sheet sync response:", resultText);
+    try {
+      await fetch(scriptUrl, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        redirect: "follow"
+      });
+    } catch (corsErr) {
+      console.warn("Attempting no-cors fallback sync:", corsErr);
+      await fetch(scriptUrl, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        mode: "no-cors"
+      });
+    }
 
     // Mark as synced locally
     const syncedIds = unsynced.map(r => r.recordId);
@@ -705,11 +712,94 @@ function closeQrModal() {
 
 function downloadQrBadgeImage() {
   const qrCanvas = document.querySelector('#qrCodeContainer canvas');
+  const empName = document.getElementById('badgeEmpName').textContent || 'Employee';
   const empId = document.getElementById('badgeEmpId').textContent || 'EMP';
-  if (qrCanvas) {
+  const empDept = document.getElementById('badgeEmpDept').textContent || '';
+  const empPhone = document.getElementById('badgeEmpPhone').textContent || '';
+
+  if (!qrCanvas) return;
+
+  // Render high-res badge canvas
+  const canvas = document.createElement('canvas');
+  const w = 480;
+  const h = 640;
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+
+  // Border
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#2563eb';
+  ctx.strokeRect(10, 10, w - 20, h - 20);
+
+  // Top header banner
+  ctx.fillStyle = '#1e3a8a';
+  ctx.fillRect(10, 10, w - 20, 50);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('ATTENDANCE MANAGER • PASS', w / 2, 42);
+
+  // Load and draw logo
+  const logoImg = new Image();
+  logoImg.crossOrigin = 'anonymous';
+  logoImg.onload = () => {
+    ctx.drawImage(logoImg, (w - 180) / 2, 70, 180, 80);
+    finishDrawing();
+  };
+  logoImg.onerror = () => {
+    finishDrawing();
+  };
+  logoImg.src = 'logo.png';
+
+  function finishDrawing() {
+    // Employee Name
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(empName, w / 2, 185);
+
+    // Department
+    ctx.fillStyle = '#64748b';
+    ctx.font = '600 16px sans-serif';
+    ctx.fillText(empDept, w / 2, 212);
+
+    // Draw QR code
+    const qrSize = 220;
+    const qrX = (w - qrSize) / 2;
+    const qrY = 235;
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+
+    // Employee ID
+    ctx.fillStyle = '#1e3a8a';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText(`ID: ${empId}`, w / 2, 495);
+
+    // Phone if present
+    if (empPhone) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '14px sans-serif';
+      ctx.fillText(empPhone, w / 2, 525);
+    }
+
+    // Footer instruction
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('SCAN AT ENTRY & EXIT GATES', w / 2, 595);
+
+    // Download file
     const link = document.createElement('a');
-    link.download = `QR_${empId}.png`;
-    link.href = qrCanvas.toDataURL('image/png');
+    link.download = `Attendance_Pass_${empId}.png`;
+    link.href = canvas.toDataURL('image/png');
     link.click();
   }
 }

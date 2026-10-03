@@ -1,13 +1,18 @@
-const CACHE_NAME = 'attendance-manager-v1';
+const CACHE_NAME = 'attendance-manager-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './app.js',
   './manifest.json',
-  'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
-  'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js',
-  'https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js'
+  './logo.png',
+  './logo_transparent.png',
+  './mascot.png',
+  './icon-192.png',
+  './icon-512.png',
+  './vendor/html5-qrcode.min.js',
+  './vendor/qrcode.min.js',
+  './vendor/lucide.min.js'
 ];
 
 self.addEventListener('install', (event) => {

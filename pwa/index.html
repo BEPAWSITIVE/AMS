@@ -7,24 +7,22 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2563eb">
   <link rel="stylesheet" href="style.css">
-  <!-- Lucide Icons -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.363.0/dist/umd/lucide.min.js"></script>
-  <!-- HTML5 QR Code Scanner -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- QRCode.js for generating QR badges offline -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- Offline-First Libraries (Local Vendor copies with CDN fallbacks) -->
+  <script src="vendor/lucide.min.js"></script>
+  <script src="vendor/html5-qrcode.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
 </head>
 <body>
 
   <!-- App Header -->
   <header class="app-header">
     <div class="brand">
-      <div class="brand-icon">
-        <i data-lucide="scan-line"></i>
-      </div>
+      <img src="mascot.png" alt="Attendance Manager Logo" class="brand-logo-img">
       <div>
         <h1>Attendance Manager</h1>
-        <span>Guard QR & Offline Sync</span>
+        <span>Guard QR &amp; Offline Sync</span>
       </div>
     </div>
     <div class="status-badges">
@@ -256,7 +254,10 @@
 
       <!-- Printable ID Card Section -->
       <div class="qr-badge-card" id="printableQrBadge">
-        <div class="qr-company-name">ATTENDANCE PASS</div>
+        <div class="qr-badge-header">
+          <img src="logo.png" alt="Attendance Manager" class="qr-badge-logo">
+          <div class="qr-company-name">OFFICIAL ATTENDANCE PASS</div>
+        </div>
         <div class="qr-card-title" id="badgeEmpName">John Doe</div>
         
         <div class="qr-canvas-container">
@@ -265,8 +266,11 @@
 
         <div class="qr-emp-details">
           <div class="qr-emp-id" id="badgeEmpId">EMP001</div>
-          <div id="badgeEmpDept" style="color: #64748b;">Engineering</div>
+          <div id="badgeEmpDept" style="color: #64748b; font-weight: 500;">Engineering</div>
           <div id="badgeEmpPhone" style="color: #94a3b8; font-size: 0.75rem; margin-top: 2px;"></div>
+        </div>
+        <div class="qr-badge-footer">
+          <span>SCAN AT ENTRY &amp; EXIT GATES</span>
         </div>
       </div>
 
