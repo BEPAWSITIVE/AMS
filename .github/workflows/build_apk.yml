@@ -14,9 +14,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Set up Flutter
@@ -25,24 +25,37 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Prepare Android Project
+      - name: Scaffold Complete Android Project
         run: |
           cd flutter_app
-          # Ensure complete Android wrapper files exist
-          flutter create . --platforms=android --org com.example
-          flutter pub get
-
-      - name: Ensure Android Permissions
-        run: |
-          MANIFEST="flutter_app/android/app/src/main/AndroidManifest.xml"
-          if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
-            sed -i '/<application/i \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.VIBRATE" />' "$MANIFEST"
+          # Ensure fresh official Android scaffold with all Gradle wrappers
+          rm -rf android
+          flutter create . --platforms=android --org com.bepawsitive.ams --project-name attendance_manager
+          
+          # Set minSdk = 21 (required by mobile_scanner / camera)
+          for f in android/app/build.gradle*; do
+            if [ -f "$f" ]; then
+              sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' "$f" || true
+              sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' "$f" || true
+              sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' "$f" || true
+            fi
+          done
+          
+          # Add Camera and Network permissions to AndroidManifest.xml
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.VIBRATE" />' "$MANIFEST"
           fi
+          
+          # Grant execution rights to Gradle wrapper
+          chmod +x android/gradlew || true
+          
+          flutter pub get
 
       - name: Build APK (Release)
         run: |
           cd flutter_app
-          flutter build apk --release
+          flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
