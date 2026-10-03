@@ -1,4 +1,6 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import '../models/employee.dart';
 import '../models/attendance_record.dart';
@@ -16,6 +18,9 @@ class DBHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+    }
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 

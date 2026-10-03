@@ -1,9 +1,9 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:apk_sideload/install_apk.dart';
+import '../utils/updater.dart';
+
 import 'package:intl/intl.dart';
 import '../services/sync_service.dart';
 import '../database/db_helper.dart';
@@ -59,110 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _downloadAndInstallDirectly(String downloadUrl) async {
-    // Show download progress dialog
-    double progress = 0.0;
-    int received = 0;
-    int total = 0;
-    StateSetter? dialogSetState;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          dialogSetState = setModalState;
-          final pct = (progress * 100).toInt();
-          final receivedMb = (received / (1024 * 1024)).toStringAsFixed(1);
-          final totalMb = total > 0 ? (total / (1024 * 1024)).toStringAsFixed(1) : "30";
-
-          return AlertDialog(
-            backgroundColor: const Color(0xFFFFFFFF),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Row(
-              children: [
-                Icon(Icons.downloading, color: Colors.blueAccent),
-                SizedBox(width: 10),
-                Text("Downloading Update...", style: TextStyle(color: Colors.black87, fontSize: 17, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Fetching the latest APK directly from GitHub. Android will prompt you to install automatically.",
-                  style: TextStyle(color: Colors.black54, fontSize: 13),
-                ),
-                const SizedBox(height: 18),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: total > 0 ? progress : null,
-                    minHeight: 10,
-                    backgroundColor: const Color(0xFFF8FAFC),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("$pct% complete", style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 13)),
-                    Text("$receivedMb MB / $totalMb MB", style: const TextStyle(color: Colors.black54, fontSize: 12)),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-
-    try {
-      final client = http.Client();
-      final request = http.Request('GET', Uri.parse(downloadUrl));
-      final response = await client.send(request);
-
-      total = response.contentLength ?? 0;
-      final tempDir = await getTemporaryDirectory();
-      final apkFile = File('${tempDir.path}/attendance_update.apk');
-      if (await apkFile.exists()) {
-        await apkFile.delete();
-      }
-
-      final sink = apkFile.openWrite();
-
-      await response.stream.listen((chunk) {
-        sink.add(chunk);
-        received += chunk.length;
-        if (total > 0 && dialogSetState != null) {
-          dialogSetState!(() {
-            progress = received / total;
-          });
-        }
-      }).asFuture();
-
-      await sink.close();
-
-      // Close progress dialog
-      if (mounted) Navigator.pop(context);
-
-      // Trigger native Android package installer
-      await InstallApk().installApk(apkFile.path);
-
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // Close dialog if open
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Download error: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
 
   Future<void> _checkForAppUpdates() async {
     setState(() => _isCheckingUpdate = true);
@@ -287,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: const Text("Update Directly Now", style: TextStyle(fontWeight: FontWeight.bold)),
               onPressed: () {
                 Navigator.pop(ctx);
-                _downloadAndInstallDirectly(downloadUrl);
+                downloadAndInstallDirectly(context, downloadUrl);
               },
             ),
           ],
@@ -338,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // IN-APP AUTO-UPDATE CARD
+          if (!kIsWeb) // IN-APP AUTO-UPDATE CARD
           Card(
             color: const Color(0xFFFFFFFF),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
