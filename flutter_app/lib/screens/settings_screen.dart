@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isCheckingUpdate = false;
   int _pendingCount = 0;
 
-  static const String CURRENT_APP_VERSION = "v1.0.2";
+  static const String CURRENT_APP_VERSION = "v1.0.3";
   static const String GITHUB_REPO = "BEPAWSITIVE/AMS";
   static const String DIRECT_APK_DOWNLOAD_URL = "https://github.com/BEPAWSITIVE/AMS/releases/download/latest/app-release.apk";
 
@@ -193,10 +193,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['published_at'] != null) {
-          final dt = DateTime.parse(data['published_at']).toLocal();
-          releaseDateStr = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
-        }
 
         final assets = data['assets'] as List<dynamic>?;
         if (assets != null && assets.isNotEmpty) {
@@ -204,8 +200,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             (a) => a['name'].toString().endsWith('.apk'),
             orElse: () => null,
           );
-          if (apkAsset != null && apkAsset['browser_download_url'] != null) {
-            downloadUrl = apkAsset['browser_download_url'];
+          if (apkAsset != null) {
+            if (apkAsset['browser_download_url'] != null) {
+              downloadUrl = apkAsset['browser_download_url'];
+            }
+            if (apkAsset['updated_at'] != null) {
+              final dt = DateTime.parse(apkAsset['updated_at']).toLocal();
+              releaseDateStr = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+            } else if (data['published_at'] != null) {
+              final dt = DateTime.parse(data['published_at']).toLocal();
+              releaseDateStr = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+            }
           }
         }
       }
