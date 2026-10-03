@@ -15,7 +15,6 @@ export default function EmployeesTab() {
   const [phone, setPhone] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
 
-
   function generateCardCanvas(qrCanvas: HTMLCanvasElement, employee: any): HTMLCanvasElement {
     const canvas = document.createElement("canvas");
     canvas.width = 600;
@@ -69,7 +68,7 @@ export default function EmployeesTab() {
     // Department & ID
     ctx.fillStyle = "#64748B";
     ctx.font = "24px sans-serif";
-    ctx.fillText(`${employee.department} • ${employee.empId}`, 300, 240);
+    ctx.fillText(`${employee.department} - ${employee.empId}`, 300, 240);
     
     // Draw QR
     // QR size is 320x320
@@ -152,7 +151,7 @@ export default function EmployeesTab() {
               <div key={emp.empId} className="bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center">
                 <div>
                   <h3 className="font-bold text-gray-800">{emp.name}</h3>
-                  <p className="text-sm text-gray-500">{emp.empId} â€¢ {emp.department}</p>
+                  <p className="text-sm text-gray-500">{emp.empId} - {emp.department}</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button onClick={() => setSelectedEmployee(emp)} className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded text-sm font-medium">
