@@ -17,7 +17,7 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserver {
-  late MobileScannerController _cameraController;
+  MobileScannerController? _cameraController;
 
   bool _isProcessing = false;
   bool _hasCameraPermission = false;
@@ -29,37 +29,43 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _cameraController = MobileScannerController(
-      detectionSpeed: DetectionSpeed.normal,
-      facing: CameraFacing.back,
-      torchEnabled: false,
-    );
     _checkAndRequestCameraPermission();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _cameraController.dispose();
+    _cameraController?.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Re-verify permission when user returns from phone settings
       _checkCameraPermissionOnly();
     }
   }
 
+  void _initController() {
+    _cameraController?.dispose();
+    _cameraController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+      autoStart: true, // Let the widget start the camera cleanly
+    );
+  }
+
   Future<void> _checkCameraPermissionOnly() async {
     final status = await Permission.camera.status;
-    setState(() {
-      _hasCameraPermission = status.isGranted;
-      _isCheckingPermission = false;
-    });
-    if (_hasCameraPermission) {
-      _cameraController.start();
+    if (status.isGranted && _cameraController == null) {
+      _initController();
+    }
+    if (mounted) {
+      setState(() {
+        _hasCameraPermission = status.isGranted;
+        _isCheckingPermission = false;
+      });
     }
   }
 
@@ -71,14 +77,22 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       status = await Permission.camera.request();
     }
 
-    setState(() {
-      _hasCameraPermission = status.isGranted;
-      _isCheckingPermission = false;
-    });
-
-    if (_hasCameraPermission) {
-      _cameraController.start();
+    if (status.isGranted) {
+      _initController();
     }
+
+    if (mounted) {
+      setState(() {
+        _hasCameraPermission = status.isGranted;
+        _isCheckingPermission = false;
+      });
+    }
+  }
+
+  void _retryCamera() {
+    setState(() {
+      _initController();
+    });
   }
 
   void _onDetect(BarcodeCapture capture) {
@@ -342,14 +356,14 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
         backgroundColor: const Color(0xFF1E293B),
         title: const Text("Guard QR Scanner", style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
-          if (_hasCameraPermission) ...[
+          if (_hasCameraPermission && _cameraController != null) ...[
             IconButton(
               icon: const Icon(Icons.flash_on),
-              onPressed: () => _cameraController.toggleTorch(),
+              onPressed: () => _cameraController?.toggleTorch(),
             ),
             IconButton(
               icon: const Icon(Icons.flip_camera_android),
-              onPressed: () => _cameraController.switchCamera(),
+              onPressed: () => _cameraController?.switchCamera(),
             ),
           ],
           IconButton(
@@ -366,7 +380,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                 children: [
                   CircularProgressIndicator(color: Colors.blueAccent),
                   SizedBox(height: 16),
-                  Text("Initializing camera...", style: TextStyle(color: Colors.white70)),
+                  Text("Checking permissions...", style: TextStyle(color: Colors.white70)),
                 ],
               ),
             )
@@ -394,7 +408,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          "Attendance Manager requires access to your camera to scan employee QR passes at office gates.",
+                          "Attendance Manager needs camera permission to scan employee QR passes at office gates.",
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.4),
                         ),
@@ -422,71 +436,87 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                     ),
                   ),
                 )
-              : Stack(
-                  children: [
-                    MobileScanner(
-                      controller: _cameraController,
-                      onDetect: _onDetect,
-                      errorBuilder: (context, error, child) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
-                                const SizedBox(height: 12),
-                                Text(
-                                  "Camera Error: ${error.errorCode.name}",
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              : _cameraController == null
+                  ? Center(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.camera),
+                        label: const Text("Start Camera"),
+                        onPressed: _retryCamera,
+                      ),
+                    )
+                  : Stack(
+                      children: [
+                        MobileScanner(
+                          controller: _cameraController!,
+                          onDetect: _onDetect,
+                          errorBuilder: (context, error, child) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline, color: Colors.redAccent, size: 52),
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      "Camera Initializing...",
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      "If the camera does not show in 2 seconds, tap below to restart it:",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(color: Colors.white60, fontSize: 12),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+                                      icon: const Icon(Icons.refresh, color: Colors.white),
+                                      label: const Text("Restart Camera", style: TextStyle(color: Colors.white)),
+                                      onPressed: _retryCamera,
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 14),
-                                ElevatedButton(
-                                  onPressed: () => openAppSettings(),
-                                  child: const Text("Open App Permissions"),
+                              ),
+                            );
+                          },
+                        ),
+                        // Viewfinder box overlay
+                        Center(
+                          child: Container(
+                            width: 250,
+                            height: 250,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.blueAccent, width: 2.5),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 30,
+                          left: 20,
+                          right: 20,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.75),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.qr_code_scanner, color: Colors.blueAccent),
+                                SizedBox(width: 10),
+                                Text(
+                                  "Point camera at employee QR badge",
+                                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      },
-                    ),
-                    // Viewfinder box overlay
-                    Center(
-                      child: Container(
-                        width: 250,
-                        height: 250,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.blueAccent, width: 2.5),
-                          borderRadius: BorderRadius.circular(16),
                         ),
-                      ),
+                      ],
                     ),
-                    Positioned(
-                      bottom: 30,
-                      left: 20,
-                      right: 20,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.75),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.qr_code_scanner, color: Colors.blueAccent),
-                            SizedBox(width: 10),
-                            Text(
-                              "Point camera at employee QR badge",
-                              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
     );
   }
 }
