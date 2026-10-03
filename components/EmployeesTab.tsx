@@ -88,6 +88,12 @@ export default function EmployeesTab() {
     return canvas;
   }
 
+  function handleOpenForm() {
+    const newId = "EMP-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+    setEmpId(newId);
+    setShowForm(true);
+  }
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!empId || !name) return;
@@ -114,7 +120,7 @@ export default function EmployeesTab() {
           <form onSubmit={handleAdd} className="space-y-4">
             <div>
               <label className="block text-sm text-gray-500 mb-1">Employee ID *</label>
-              <input required value={empId} onChange={e=>setEmpId(e.target.value)} className="w-full border rounded p-2" />
+              <input required value={empId} readOnly className="w-full border rounded p-2 bg-gray-50 text-gray-500 font-mono" />
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Full Name *</label>
@@ -138,7 +144,7 @@ export default function EmployeesTab() {
         <>
           <div className="p-4 flex justify-between items-center">
             <h2 className="text-lg font-bold text-gray-700">Staff List</h2>
-            <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm shadow">
+            <button onClick={handleOpenForm} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm shadow">
               + Add Employee
             </button>
           </div>
