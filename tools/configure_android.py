@@ -20,19 +20,25 @@ def configure_android():
 
                     # In app build.gradle, disable minification in release build to prevent R8 from stripping ML Kit & CameraX
                     if "com.android.application" in content or "android {" in content:
-                        # Ensure minifyEnabled false and shrinkResources false
-                        if "minifyEnabled" in content:
+                        is_kts = fname.endswith(".kts")
+                        minify_prop = "isMinifyEnabled = false" if is_kts else "minifyEnabled false"
+                        shrink_prop = "isShrinkResources = false" if is_kts else "shrinkResources false"
+                        
+                        if "minifyEnabled" in content or "isMinifyEnabled" in content:
                             content = re.sub(r'minifyEnabled\s+true', 'minifyEnabled false', content)
                             content = re.sub(r'minifyEnabled\s*=\s*true', 'minifyEnabled = false', content)
+                            content = re.sub(r'isMinifyEnabled\s*=\s*true', 'isMinifyEnabled = false', content)
                         else:
                             content = re.sub(
                                 r'(buildTypes\s*\{[^{}]*release\s*\{)',
-                                r'\1\n            minifyEnabled false\n            shrinkResources false',
+                                f'\\1\n            {minify_prop}\n            {shrink_prop}',
                                 content
                             )
-                        if "shrinkResources" in content:
+                        
+                        if "shrinkResources" in content or "isShrinkResources" in content:
                             content = re.sub(r'shrinkResources\s+true', 'shrinkResources false', content)
                             content = re.sub(r'shrinkResources\s*=\s*true', 'shrinkResources = false', content)
+                            content = re.sub(r'isShrinkResources\s*=\s*true', 'isShrinkResources = false', content)
 
                     if content != orig:
                         with open(fpath, "w", encoding="utf-8") as f:
