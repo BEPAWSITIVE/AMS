@@ -244,7 +244,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: const Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -272,11 +272,11 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
               const SizedBox(height: 6),
               Text(
                 employee.name,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.black87),
               ),
               Text(
                 "${employee.empId} • ${employee.department}",
-                style: const TextStyle(fontSize: 14, color: Colors.white70),
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
               ),
               const SizedBox(height: 12),
               Container(
@@ -287,7 +287,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                 ),
                 child: Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
                 ),
               ),
               const SizedBox(height: 20),
@@ -323,7 +323,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFFFFFFFF),
         title: const Text("Test Scan Employee", style: TextStyle(color: Colors.white)),
         content: SizedBox(
           width: double.maxFinite,
@@ -334,7 +334,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
               final emp = employees[i];
               return ListTile(
                 title: Text(emp.name, style: const TextStyle(color: Colors.white)),
-                subtitle: Text("${emp.empId} • ${emp.department}", style: const TextStyle(color: Colors.white60)),
+                subtitle: Text("${emp.empId} • ${emp.department}", style: const TextStyle(color: Colors.black54)),
                 trailing: const Icon(Icons.touch_app, color: Colors.blueAccent),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -351,9 +351,9 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFFFFFFFF),
         title: const Text("Guard QR Scanner", style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           if (_hasCameraPermission) ...[
@@ -380,7 +380,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                 children: [
                   CircularProgressIndicator(color: Colors.blueAccent),
                   SizedBox(height: 16),
-                  Text("Checking permissions...", style: TextStyle(color: Colors.white70)),
+                  Text("Checking permissions...", style: TextStyle(color: Colors.black54)),
                 ],
               ),
             )
@@ -404,13 +404,13 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                         const SizedBox(height: 20),
                         const Text(
                           "Camera Permission Required",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                         ),
                         const SizedBox(height: 8),
                         const Text(
                           "Attendance Manager needs camera permission to scan employee QR passes at office gates.",
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.4),
+                          style: TextStyle(color: Colors.black54, fontSize: 13, height: 1.4),
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
@@ -430,7 +430,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                         const SizedBox(height: 10),
                         TextButton(
                           onPressed: () => openAppSettings(),
-                          child: const Text("Open Phone App Settings", style: TextStyle(color: Colors.white54)),
+                          child: const Text("Open Phone App Settings", style: TextStyle(color: Colors.black54)),
                         ),
                       ],
                     ),
@@ -452,25 +452,25 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                                 const SizedBox(height: 14),
                                 Text(
                                   "Camera Error: ${error.errorCode.name}",
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   error.errorDetails?.message ?? "Could not connect to camera hardware. Tap to restart:",
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                                 ),
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-                                  icon: const Icon(Icons.refresh, color: Colors.white),
+                                  icon: const Icon(Icons.refresh, color: Colors.black87),
                                   label: const Text("Restart Camera", style: TextStyle(color: Colors.white)),
                                   onPressed: _retryCamera,
                                 ),
                                 const SizedBox(height: 8),
                                 TextButton(
                                   onPressed: () => openAppSettings(),
-                                  child: const Text("Open Phone App Settings", style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                  child: const Text("Open Phone App Settings", style: TextStyle(color: Colors.black54, fontSize: 12)),
                                 ),
                               ],
                             ),

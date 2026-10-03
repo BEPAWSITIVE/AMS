@@ -17,12 +17,17 @@ class AttendanceManagerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Attendance Manager',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
-        colorScheme: const ColorScheme.dark(
+      theme: ThemeData.light().copyWith(
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFFFFFFF),
+          foregroundColor: Color(0xFF0F172A),
+          elevation: 1,
+        ),
+        colorScheme: const ColorScheme.light(
           primary: Color(0xFF2563EB),
           secondary: Color(0xFF3B82F6),
-          surface: Color(0xFF1E293B),
+          surface: Color(0xFFFFFFFF),
         ),
       ),
       home: const MainNavigationScreen(),
@@ -64,9 +69,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFF0F172A),
-        selectedItemColor: const Color(0xFF60A5FA),
-        unselectedItemColor: const Color(0xFF94A3B8),
+        backgroundColor: const Color(0xFFFFFFFF),
+        selectedItemColor: const Color(0xFF2563EB),
+        unselectedItemColor: const Color(0xFF64748B),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.qr_code_scanner),

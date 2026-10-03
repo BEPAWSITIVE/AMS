@@ -77,13 +77,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final totalMb = total > 0 ? (total / (1024 * 1024)).toStringAsFixed(1) : "30";
 
           return AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
+            backgroundColor: const Color(0xFFFFFFFF),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Row(
               children: [
                 Icon(Icons.downloading, color: Colors.blueAccent),
                 SizedBox(width: 10),
-                Text("Downloading Update...", style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+                Text("Downloading Update...", style: TextStyle(color: Colors.black87, fontSize: 17, fontWeight: FontWeight.bold)),
               ],
             ),
             content: Column(
@@ -92,7 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 const Text(
                   "Fetching the latest APK directly from GitHub. Android will prompt you to install automatically.",
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                  style: TextStyle(color: Colors.black54, fontSize: 13),
                 ),
                 const SizedBox(height: 18),
                 ClipRRect(
@@ -100,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: LinearProgressIndicator(
                     value: total > 0 ? progress : null,
                     minHeight: 10,
-                    backgroundColor: const Color(0xFF0F172A),
+                    backgroundColor: const Color(0xFFF8FAFC),
                     valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
                   ),
                 ),
@@ -109,7 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("$pct% complete", style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 13)),
-                    Text("$receivedMb MB / $totalMb MB", style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    Text("$receivedMb MB / $totalMb MB", style: const TextStyle(color: Colors.black54, fontSize: 12)),
                   ],
                 ),
               ],
@@ -220,13 +220,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
+          backgroundColor: const Color(0xFFFFFFFF),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
               Icon(Icons.system_update, color: Colors.blueAccent),
               SizedBox(width: 10),
-              Text("App Update Ready", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text("App Update Ready", style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
@@ -235,13 +235,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const Text(
                 "A new version of Attendance Manager is ready on GitHub.",
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: Colors.black54, fontSize: 13),
               ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
@@ -250,16 +250,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text("Current Version:", style: TextStyle(color: Colors.white54, fontSize: 12)),
-                        Text(CURRENT_APP_VERSION, style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                        const Text("Current Version:", style: TextStyle(color: Colors.black54, fontSize: 12)),
+                        Text(CURRENT_APP_VERSION, style: const TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold, fontSize: 12)),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text("Updated on GitHub:", style: TextStyle(color: Colors.white54, fontSize: 12)),
-                        Text(releaseDateStr, style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                        const Text("Updated on GitHub:", style: TextStyle(color: Colors.black54, fontSize: 12)),
+                        Text(releaseDateStr, style: const TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
                       ],
                     ),
                   ],
@@ -268,14 +268,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 14),
               const Text(
                 "Tap below to download directly and trigger the Android update dialog.",
-                style: TextStyle(color: Colors.white54, fontSize: 12),
+                style: TextStyle(color: Colors.black54, fontSize: 12),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text("Later", style: TextStyle(color: Colors.white60)),
+              child: const Text("Later", style: TextStyle(color: Colors.black54)),
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -330,9 +330,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFFFFFFFF),
         title: const Text("Settings & Sync", style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: ListView(
@@ -340,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           // IN-APP AUTO-UPDATE CARD
           Card(
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFFFFFFFF),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -354,7 +354,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Icon(Icons.system_update_alt, color: Colors.blueAccent),
                           SizedBox(width: 8),
-                          Text("App Version & Updates", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text("App Version & Updates", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                         ],
                       ),
                       Container(
@@ -373,7 +373,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     "Connected to GitHub repo (BEPAWSITIVE/AMS). Tap below to check, download, and install the latest APK directly without opening a browser.",
-                    style: TextStyle(color: Colors.white60, fontSize: 13),
+                    style: TextStyle(color: Colors.black54, fontSize: 13),
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -403,28 +403,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // GOOGLE SHEET WEBHOOK
           Card(
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFFFFFFFF),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Google Sheet Webhook", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const Text("Google Sheet Webhook", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 6),
                   const Text(
                     "Paste the Google Apps Script Web App URL to push attendance records automatically.",
-                    style: TextStyle(color: Colors.white60, fontSize: 13),
+                    style: TextStyle(color: Colors.black54, fontSize: 13),
                   ),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _urlCtrl,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: const TextStyle(color: Colors.black87, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: "https://script.google.com/macros/s/.../exec",
-                      hintStyle: const TextStyle(color: Colors.white30),
+                      hintStyle: const TextStyle(color: Colors.black38),
                       filled: true,
-                      fillColor: const Color(0xFF0F172A),
+                      fillColor: const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
@@ -450,18 +450,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // OFFLINE SYNC QUEUE
           Card(
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFFFFFFFF),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Offline Sync Queue", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const Text("Offline Sync Queue", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 6),
                   Text(
                     "Unsynced records pending upload: $_pendingCount",
-                    style: TextStyle(color: _pendingCount > 0 ? Colors.amberAccent : Colors.greenAccent, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: _pendingCount > 0 ? Colors.orange.shade800 : Colors.green.shade700, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -489,12 +489,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // DEMO DATA
           Card(
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFFFFFFFF),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: ListTile(
               leading: const Icon(Icons.people_outline, color: Colors.blueAccent),
-              title: const Text("Load Sample Employees", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              subtitle: const Text("Pre-load sample staff for immediate testing", style: TextStyle(color: Colors.white60, fontSize: 12)),
+              title: const Text("Load Sample Employees", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+              subtitle: const Text("Pre-load sample staff for immediate testing", style: TextStyle(color: Colors.black54, fontSize: 12)),
               onTap: _loadSampleStaff,
             ),
           ),

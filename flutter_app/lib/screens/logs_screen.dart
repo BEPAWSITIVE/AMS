@@ -36,9 +36,9 @@ class _LogsScreenState extends State<LogsScreen> {
     final dateFormatted = DateFormat('EEE, dd MMM yyyy').format(_selectedDate);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFFFFFFFF),
         title: const Text("Attendance Records", style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -66,13 +66,13 @@ class _LogsScreenState extends State<LogsScreen> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFFFFFFFF),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   "Date: $dateFormatted",
-                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
                 ),
                 Text(
                   "Total: ${_records.length} Present",
@@ -88,7 +88,7 @@ class _LogsScreenState extends State<LogsScreen> {
                     ? Center(
                         child: Text(
                           "No scans recorded for $dateFormatted",
-                          style: const TextStyle(color: Colors.white54),
+                          style: const TextStyle(color: Colors.black54),
                         ),
                       )
                     : ListView.builder(
@@ -97,7 +97,7 @@ class _LogsScreenState extends State<LogsScreen> {
                         itemBuilder: (ctx, i) {
                           final r = _records[i];
                           return Card(
-                            color: const Color(0xFF1E293B),
+                            color: const Color(0xFFFFFFFF),
                             margin: const EdgeInsets.only(bottom: 10),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             child: Padding(
@@ -110,7 +110,7 @@ class _LogsScreenState extends State<LogsScreen> {
                                     children: [
                                       Text(
                                         r.empName,
-                                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
                                       ),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -124,7 +124,7 @@ class _LogsScreenState extends State<LogsScreen> {
                                             Icon(
                                               r.isSynced == 1 ? Icons.check_circle : Icons.cloud_upload_outlined,
                                               size: 14,
-                                              color: r.isSynced == 1 ? Colors.greenAccent : Colors.amberAccent,
+                                              color: r.isSynced == 1 ? Colors.green.shade700 : Colors.orange.shade800,
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
@@ -132,7 +132,7 @@ class _LogsScreenState extends State<LogsScreen> {
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.bold,
-                                                color: r.isSynced == 1 ? Colors.greenAccent : Colors.amberAccent,
+                                                color: r.isSynced == 1 ? Colors.green.shade700 : Colors.orange.shade800,
                                               ),
                                             ),
                                           ],
@@ -142,21 +142,21 @@ class _LogsScreenState extends State<LogsScreen> {
                                   ),
                                   Text(
                                     "${r.empId} • ${r.department}",
-                                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                    style: const TextStyle(color: Colors.black54, fontSize: 12),
                                   ),
                                   const SizedBox(height: 10),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0F172A),
+                                      color: const Color(0xFFF8FAFC),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text("In: ${r.inTime}", style: const TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.w600)),
+                                        Text("In: ${r.inTime}", style: const TextStyle(color: Colors.green.shade700, fontSize: 13, fontWeight: FontWeight.w600)),
                                         Text("Out: ${r.outTime ?? 'Pending'}", style: const TextStyle(color: Colors.blueAccent, fontSize: 13, fontWeight: FontWeight.w600)),
-                                        Text("Total: ${r.totalHours ?? '--'}", style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                                        Text("Total: ${r.totalHours ?? '--'}", style: const TextStyle(color: Colors.black54, fontSize: 13)),
                                       ],
                                     ),
                                   ),

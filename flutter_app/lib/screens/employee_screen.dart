@@ -38,32 +38,32 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text("Register Employee", style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFFFFFFFF),
+        title: const Text("Register Employee", style: TextStyle(color: Colors.black87)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: "Full Name *", labelStyle: TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black87),
+                decoration: const InputDecoration(labelText: "Full Name *", labelStyle: TextStyle(color: Colors.black54)),
               ),
               TextField(
                 controller: idCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: "Employee ID *", labelStyle: TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black87),
+                decoration: const InputDecoration(labelText: "Employee ID *", labelStyle: TextStyle(color: Colors.black54)),
               ),
               TextField(
                 controller: deptCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: "Department / Role", labelStyle: TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black87),
+                decoration: const InputDecoration(labelText: "Department / Role", labelStyle: TextStyle(color: Colors.black54)),
               ),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: "Phone Number", labelStyle: TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black87),
+                decoration: const InputDecoration(labelText: "Phone Number", labelStyle: TextStyle(color: Colors.black54)),
               ),
             ],
           ),
@@ -71,7 +71,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.white60)),
+            child: const Text("Cancel", style: TextStyle(color: Colors.black54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
@@ -162,9 +162,9 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFFFFFFFF),
         title: const Text("Employees Directory", style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -178,7 +178,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
           : _employees.isEmpty
               ? const Center(
                   child: Text("No employees registered yet.\nTap '+ Add Employee' to create one.",
-                      textAlign: TextAlign.center, style: TextStyle(color: Colors.white60)),
+                      textAlign: TextAlign.center, style: TextStyle(color: Colors.black54)),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(14),
@@ -186,7 +186,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                   itemBuilder: (ctx, i) {
                     final emp = _employees[i];
                     return Card(
-                      color: const Color(0xFF1E293B),
+                      color: const Color(0xFFFFFFFF),
                       margin: const EdgeInsets.only(bottom: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       child: ListTile(
@@ -197,8 +197,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                         ),
-                        title: Text(emp.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                        subtitle: Text("${emp.empId} • ${emp.department}", style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                        title: Text(emp.name, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                        subtitle: Text("${emp.empId} • ${emp.department}", style: const TextStyle(color: Colors.black54, fontSize: 12)),
                         trailing: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent.withOpacity(0.2),
