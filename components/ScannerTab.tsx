@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+
 import { db } from "@/lib/db";
 import { CheckCircle2, XCircle, ChevronRight, QrCode, ClipboardList } from "lucide-react";
 
 export default function ScannerTab() {
   const [scanResult, setScanResult] = useState<{success: boolean, msg: string} | null>(null);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<any>(null);
   const [greeting, setGreeting] = useState("Good Morning!");
 
   useEffect(() => {
@@ -17,25 +17,45 @@ export default function ScannerTab() {
   }, []);
 
   useEffect(() => {
-    if (!scannerRef.current) {
-      scannerRef.current = new Html5QrcodeScanner(
-        "reader",
-        { 
-          fps: 10, 
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-          showTorchButtonIfSupported: true,
-        },
-        false
-      );
-      
-      scannerRef.current.render(onScanSuccess, onScanFailure);
-    }
+    let html5QrCode: any;
+
+    const timer = setTimeout(() => {
+      import("html5-qrcode").then(({ Html5Qrcode }) => {
+        html5QrCode = new Html5Qrcode("reader");
+        
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0 
+          },
+          onScanSuccess,
+          onScanFailure
+        ).then(() => {
+          scannerRef.current = html5QrCode;
+        }).catch(err => {
+          console.error("Camera start failed automatically", err);
+        });
+      });
+    }, 100);
 
     return () => {
+      clearTimeout(timer);
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.error("Failed to clear scanner", e));
-        scannerRef.current = null;
+        try {
+          if (scannerRef.current.isScanning) {
+            scannerRef.current.stop().then(() => {
+              scannerRef.current?.clear();
+              scannerRef.current = null;
+            }).catch((e: any) => console.error("Failed to stop scanner", e));
+          } else {
+            scannerRef.current.clear();
+            scannerRef.current = null;
+          }
+        } catch(e) {}
+      } else if (html5QrCode) {
+        try { html5QrCode.clear(); } catch(e) {}
       }
     };
   }, []);
