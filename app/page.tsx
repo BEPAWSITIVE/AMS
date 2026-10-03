@@ -19,12 +19,12 @@ export default function Home() {
 
       <header className="bg-[#F4F9FF] p-4 flex justify-between items-center z-10 relative">
         <div className="flex items-center space-x-2">
-          {/* We'll use a placeholder icon for the logo if we don't have the exact image */}
-          <div className="w-10 h-10 bg-white rounded-lg shadow-sm border border-gray-100 flex items-center justify-center relative">
-             <ClipboardList className="text-blue-900" size={24} />
-             <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
-                <span className="text-white text-[8px] font-bold">✓</span>
-             </div>
+
+          <div className="w-10 h-10 rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+             <Image src="/logo.jpg" alt="Logo" width={40} height={40} className="object-cover" priority />
+
+                
+
           </div>
           <div className="leading-tight">
             <h1 className="text-[17px] font-extrabold text-[#1E293B] tracking-tight">Attendance</h1>
