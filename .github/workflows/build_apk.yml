@@ -35,21 +35,41 @@ jobs:
           rm -rf android
           flutter create . --platforms=android --org com.bepawsitive.ams --project-name attendance_manager
           
-          # Set minSdk = 21 (required by mobile_scanner / camera)
-          for f in android/app/build.gradle*; do
-            if [ -f "$f" ]; then
-              sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' "$f" || true
-              sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' "$f" || true
-              sed -i 's/minSdkVersion [0-9]*/minSdkVersion 21/g' "$f" || true
-            fi
-          done
-          
-          # Add Camera, Flash, Network and APK Install permissions to AndroidManifest.xml
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if [ -f "$MANIFEST" ]; then
-            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />' "$MANIFEST"
-          fi
-          
+          # Configure minSdk = 21 and permissions safely using Python
+          python3 -c "
+import os
+
+for fname in ['android/app/build.gradle', 'android/app/build.gradle.kts']:
+    if os.path.exists(fname):
+        with open(fname, 'r') as f:
+            c = f.read()
+        c = c.replace('minSdk = flutter.minSdkVersion', 'minSdk = 21')
+        c = c.replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 21')
+        with open(fname, 'w') as f:
+            f.write(c)
+
+manifest_path = 'android/app/src/main/AndroidManifest.xml'
+if os.path.exists(manifest_path):
+    with open(manifest_path, 'r') as f:
+        m = f.read()
+    permissions = '''
+    <uses-permission android:name=\"android.permission.CAMERA\" />
+    <uses-permission android:name=\"android.permission.INTERNET\" />
+    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />
+    <uses-permission android:name=\"android.permission.VIBRATE\" />
+    <uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\" />
+    <uses-feature android:name=\"android.hardware.camera\" android:required=\"false\" />
+    <uses-feature android:name=\"android.hardware.camera.autofocus\" android:required=\"false\" />
+    <uses-feature android:name=\"android.hardware.camera.flash\" android:required=\"false\" />
+'''
+    if 'android.permission.CAMERA' not in m:
+        m = m.replace('<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">', '<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">\n' + permissions)
+        with open(manifest_path, 'w') as f:
+            f.write(m)
+"
+          # Display modified AndroidManifest.xml for verification in logs
+          cat android/app/src/main/AndroidManifest.xml
+
           # Grant execution rights to Gradle wrapper
           chmod +x android/gradlew || true
           

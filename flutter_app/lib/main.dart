@@ -40,20 +40,24 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    ScannerScreen(),
-    EmployeeScreen(),
-    LogsScreen(),
-    SettingsScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: () {
+        switch (_currentIndex) {
+          case 0:
+            return const ScannerScreen();
+          case 1:
+            return const EmployeeScreen();
+          case 2:
+            return const LogsScreen();
+          case 3:
+            return const SettingsScreen();
+          default:
+            return const ScannerScreen();
+        }
+      }(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
