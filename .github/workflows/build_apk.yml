@@ -28,6 +28,12 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Cache Android Debug Keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-debug-keystore
+
       - name: Scaffold Complete Android Project
         run: |
           cd flutter_app
