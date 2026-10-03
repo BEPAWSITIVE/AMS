@@ -205,7 +205,7 @@ export default function EmployeesTab() {
                         files: [file]
                       });
                       return;
-                    } catch (err) {
+                    } catch (err: any) {
                       console.log("Share cancelled or failed", err);
                     }
                   } else {

@@ -34,7 +34,7 @@ export default function ScannerTab() {
           onScanFailure
         ).then(() => {
           scannerRef.current = html5QrCode;
-        }).catch(err => {
+        }).catch((err: any) => {
           console.error("Camera start failed automatically", err);
         });
       });
@@ -53,9 +53,9 @@ export default function ScannerTab() {
             scannerRef.current.clear();
             scannerRef.current = null;
           }
-        } catch(e) {}
+        } catch(e: any) {}
       } else if (html5QrCode) {
-        try { html5QrCode.clear(); } catch(e) {}
+        try { html5QrCode.clear(); } catch(e: any) {}
       }
     };
   }, []);
@@ -116,7 +116,7 @@ export default function ScannerTab() {
           setScanResult({ success: true, msg: `${emp.name} Checked IN at ${timeStr}` });
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       setScanResult({ success: false, msg: "Invalid QR Code" });
     }
 
