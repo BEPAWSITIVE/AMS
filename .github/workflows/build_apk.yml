@@ -49,6 +49,7 @@ jobs:
       - name: Build APK (Release)
         run: |
           cd flutter_app
+          flutter analyze
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK Artifact

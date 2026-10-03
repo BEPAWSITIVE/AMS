@@ -4,21 +4,23 @@ import re
 def configure_android():
     print("Configuring Android for Attendance Manager...")
 
-    # 1. Update minSdk = 21 in build.gradle / build.gradle.kts
-    gradle_files = [
-        os.path.join("android", "app", "build.gradle"),
-        os.path.join("android", "app", "build.gradle.kts"),
-    ]
-    for gpath in gradle_files:
-        if os.path.exists(gpath):
-            with open(gpath, "r", encoding="utf-8") as f:
-                content = f.read()
-            # Replace minSdk
-            content = re.sub(r'minSdk\s*=\s*flutter\.minSdkVersion', 'minSdk = 21', content)
-            content = re.sub(r'minSdkVersion\s+flutter\.minSdkVersion', 'minSdkVersion 21', content)
-            with open(gpath, "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"Updated minSdk in {gpath}")
+    # 1. Update minSdk to 21 everywhere in android/
+    for root, dirs, files in os.walk("android"):
+        for fname in files:
+            if fname.startswith("build.gradle"):
+                fpath = os.path.join(root, fname)
+                try:
+                    with open(fpath, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    orig = content
+                    content = re.sub(r'minSdk\s*=\s*[a-zA-Z0-9_.]+', 'minSdk = 21', content)
+                    content = re.sub(r'minSdkVersion\s+[a-zA-Z0-9_.]+', 'minSdkVersion 21', content)
+                    if content != orig:
+                        with open(fpath, "w", encoding="utf-8") as f:
+                            f.write(content)
+                        print(f"Updated minSdk to 21 in {fpath}")
+                except Exception as e:
+                    print(f"Warning: could not process {fpath}: {e}")
 
     # 2. Add permissions and hardware features to AndroidManifest.xml
     manifest_path = os.path.join("android", "app", "src", "main", "AndroidManifest.xml")
@@ -37,7 +39,6 @@ def configure_android():
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 """
         if "android.permission.CAMERA" not in manifest:
-            # Insert right after <manifest ...>
             manifest = re.sub(r'(<manifest[^>]*>)', r'\1' + permissions, manifest, count=1)
             with open(manifest_path, "w", encoding="utf-8") as f:
                 f.write(manifest)

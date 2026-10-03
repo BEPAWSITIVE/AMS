@@ -441,16 +441,6 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                     MobileScanner(
                       controller: _cameraController,
                       onDetect: _onDetect,
-                      placeholderBuilder: (ctx) => const Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(color: Colors.blueAccent),
-                            SizedBox(height: 12),
-                            Text("Starting camera...", style: TextStyle(color: Colors.white70, fontSize: 13)),
-                          ],
-                        ),
-                      ),
                       errorBuilder: (context, error, child) {
                         return Center(
                           child: Padding(
