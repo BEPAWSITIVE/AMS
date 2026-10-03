@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
+import { MessageCircle, X } from "lucide-react";
 
 export default function EmployeesTab() {
   const employees = useLiveQuery(() => db.employees.toArray());
@@ -12,7 +13,7 @@ export default function EmployeesTab() {
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
   const [phone, setPhone] = useState("");
-  const [selectedQR, setSelectedQR] = useState<string | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -51,8 +52,8 @@ export default function EmployeesTab() {
               <input value={department} onChange={e=>setDepartment(e.target.value)} className="w-full border rounded p-2" />
             </div>
             <div>
-              <label className="block text-sm text-gray-500 mb-1">Phone</label>
-              <input value={phone} onChange={e=>setPhone(e.target.value)} className="w-full border rounded p-2" />
+              <label className="block text-sm text-gray-500 mb-1">WhatsApp Phone (Optional)</label>
+              <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+1234567890" className="w-full border rounded p-2" />
             </div>
             <div className="flex justify-end space-x-2 pt-2">
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-500">Cancel</button>
@@ -79,12 +80,12 @@ export default function EmployeesTab() {
                   <h3 className="font-bold text-gray-800">{emp.name}</h3>
                   <p className="text-sm text-gray-500">{emp.empId} • {emp.department}</p>
                 </div>
-                <div className="flex space-x-2">
-                  <button onClick={() => setSelectedQR(JSON.stringify({ empId: emp.empId, name: emp.name }))} className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded text-sm font-medium">
+                <div className="flex items-center space-x-2">
+                  <button onClick={() => setSelectedEmployee(emp)} className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded text-sm font-medium">
                     Show QR
                   </button>
-                  <button onClick={() => handleDelete(emp.empId)} className="text-red-400 p-1.5">
-                    ✕
+                  <button onClick={() => handleDelete(emp.empId)} className="text-red-400 p-1.5 hover:bg-red-50 rounded-full transition-colors">
+                    <X size={18} />
                   </button>
                 </div>
               </div>
@@ -93,13 +94,71 @@ export default function EmployeesTab() {
         </>
       )}
 
-      {selectedQR && (
+      {selectedEmployee && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl w-full max-w-xs flex flex-col items-center relative">
-            <button onClick={() => setSelectedQR(null)} className="absolute top-3 right-4 text-gray-400 text-xl font-bold">✕</button>
-            <h3 className="font-bold text-blue-600 mb-4 tracking-widest text-sm">ATTENDANCE PASS</h3>
-            <QRCodeSVG value={selectedQR} size={200} />
-            <p className="mt-4 text-gray-400 text-xs">Scan this at the entrance</p>
+          <div className="bg-white p-6 rounded-2xl w-full max-w-xs flex flex-col items-center relative shadow-xl">
+            <button onClick={() => setSelectedEmployee(null)} className="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">
+              <X size={20} />
+            </button>
+            
+            <h3 className="font-bold text-blue-600 mb-1 tracking-widest text-sm">ATTENDANCE PASS</h3>
+            <p className="text-gray-800 font-bold text-lg mb-4">{selectedEmployee.name}</p>
+            
+            <div className="p-2 bg-white border-2 border-gray-100 rounded-xl mb-4">
+              <QRCodeCanvas 
+                id="qr-canvas" 
+                value={JSON.stringify({ empId: selectedEmployee.empId, name: selectedEmployee.name })} 
+                size={200} 
+              />
+            </div>
+            
+            <button 
+              onClick={() => {
+                const canvas = document.getElementById("qr-canvas") as HTMLCanvasElement;
+                if (!canvas) return;
+                
+                canvas.toBlob(async (blob) => {
+                  if (!blob) return;
+                  const file = new File([blob], `${selectedEmployee.name.replace(/\s+/g, '_')}_QR.png`, { type: "image/png" });
+                  
+                  // Try Native Web Share API first
+                  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                      await navigator.share({
+                        title: 'Attendance QR',
+                        text: `Here is the Attendance QR Pass for ${selectedEmployee.name}.`,
+                        files: [file]
+                      });
+                      return;
+                    } catch (err) {
+                      console.log("Share cancelled or failed", err);
+                    }
+                  } else {
+                    // Fallback for desktop or unsupported browsers
+                    const url = URL.createObjectURL(file);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    let waUrl = "https://wa.me/";
+                    if (selectedEmployee.phone) {
+                      waUrl += selectedEmployee.phone.replace(/\D/g,'');
+                    }
+                    waUrl += "?text=" + encodeURIComponent(`Here is the Attendance QR Pass for ${selectedEmployee.name}.\n\nThe QR image has been downloaded to your device, please attach it to this message!`);
+                    
+                    if (confirm("The QR Image has been downloaded. Click OK to open WhatsApp now, and don't forget to attach the downloaded image!")) {
+                      window.open(waUrl, "_blank");
+                    }
+                  }
+                }, "image/png");
+              }}
+              className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white py-3 rounded-xl flex items-center justify-center font-bold shadow-md transition-colors text-sm"
+            >
+              <MessageCircle size={18} className="mr-2" /> Share to WhatsApp
+            </button>
           </div>
         </div>
       )}
