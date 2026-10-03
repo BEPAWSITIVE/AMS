@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isCheckingUpdate = false;
   int _pendingCount = 0;
 
-  static const String CURRENT_APP_VERSION = "v1.0.4";
+  static const String CURRENT_APP_VERSION = "v1.0.5";
   static const String GITHUB_REPO = "BEPAWSITIVE/AMS";
   static const String DIRECT_APK_DOWNLOAD_URL = "https://github.com/BEPAWSITIVE/AMS/releases/download/latest/app-release.apk";
 

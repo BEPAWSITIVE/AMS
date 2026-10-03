@@ -51,6 +51,7 @@ jobs:
           chmod +x android/gradlew || true
           
           flutter pub get
+          dart run flutter_launcher_icons
 
       - name: Build APK (Release)
         run: |
