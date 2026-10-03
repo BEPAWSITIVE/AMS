@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { db } from "@/lib/db";
-import { CheckCircle2, XCircle, ChevronRight, QrCode } from "lucide-react";
+import { CheckCircle2, XCircle, ChevronRight, QrCode, ClipboardList } from "lucide-react";
 
 export default function ScannerTab() {
   const [scanResult, setScanResult] = useState<{success: boolean, msg: string} | null>(null);
