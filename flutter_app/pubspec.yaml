@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   mobile_scanner: ^5.2.3
+  permission_handler: ^11.3.1
   qr_flutter: ^4.1.0
   sqflite: ^2.3.3+1
   path: ^1.9.0

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../models/employee.dart';
 import '../models/attendance_record.dart';
 import '../database/db_helper.dart';
@@ -15,21 +16,69 @@ class ScannerScreen extends StatefulWidget {
   State<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends State<ScannerScreen> {
-  final MobileScannerController _cameraController = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    facing: CameraFacing.back,
-    torchEnabled: false,
-  );
+class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserver {
+  late MobileScannerController _cameraController;
 
   bool _isProcessing = false;
+  bool _hasCameraPermission = false;
+  bool _isCheckingPermission = true;
   String _lastScanned = "";
   DateTime _lastScanTime = DateTime.now().subtract(const Duration(seconds: 10));
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _cameraController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+    _checkAndRequestCameraPermission();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cameraController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Re-verify permission when user returns from phone settings
+      _checkCameraPermissionOnly();
+    }
+  }
+
+  Future<void> _checkCameraPermissionOnly() async {
+    final status = await Permission.camera.status;
+    setState(() {
+      _hasCameraPermission = status.isGranted;
+      _isCheckingPermission = false;
+    });
+    if (_hasCameraPermission) {
+      _cameraController.start();
+    }
+  }
+
+  Future<void> _checkAndRequestCameraPermission() async {
+    setState(() => _isCheckingPermission = true);
+    var status = await Permission.camera.status;
+
+    if (!status.isGranted) {
+      status = await Permission.camera.request();
+    }
+
+    setState(() {
+      _hasCameraPermission = status.isGranted;
+      _isCheckingPermission = false;
+    });
+
+    if (_hasCameraPermission) {
+      _cameraController.start();
+    }
   }
 
   void _onDetect(BarcodeCapture capture) {
@@ -246,6 +295,45 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
   }
 
+  void _promptManualTestScan() async {
+    final employees = await DBHelper.instance.getAllEmployees();
+    if (!mounted) return;
+
+    if (employees.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No employees found. Go to 'Settings' and tap 'Load Sample Employees' first.")),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text("Test Scan Employee", style: TextStyle(color: Colors.white)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: employees.length,
+            itemBuilder: (c, i) {
+              final emp = employees[i];
+              return ListTile(
+                title: Text(emp.name, style: const TextStyle(color: Colors.white)),
+                subtitle: Text("${emp.empId} • ${emp.department}", style: const TextStyle(color: Colors.white60)),
+                trailing: const Icon(Icons.touch_app, color: Colors.blueAccent),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _processBarcode(emp.empId);
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -254,58 +342,151 @@ class _ScannerScreenState extends State<ScannerScreen> {
         backgroundColor: const Color(0xFF1E293B),
         title: const Text("Guard QR Scanner", style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          if (_hasCameraPermission) ...[
+            IconButton(
+              icon: const Icon(Icons.flash_on),
+              onPressed: () => _cameraController.toggleTorch(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.flip_camera_android),
+              onPressed: () => _cameraController.switchCamera(),
+            ),
+          ],
           IconButton(
-            icon: const Icon(Icons.flash_on),
-            onPressed: () => _cameraController.toggleTorch(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.flip_camera_android),
-            onPressed: () => _cameraController.switchCamera(),
+            icon: const Icon(Icons.dialpad, color: Colors.blueAccent),
+            tooltip: "Test Scan without camera",
+            onPressed: _promptManualTestScan,
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: _cameraController,
-            onDetect: _onDetect,
-          ),
-          // Viewfinder box overlay
-          Center(
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.blueAccent, width: 2.5),
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 30,
-            left: 20,
-            right: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.75),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: _isCheckingPermission
+          ? const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.qr_code_scanner, color: Colors.blueAccent),
-                  SizedBox(width: 10),
-                  Text(
-                    "Point camera at employee QR badge",
-                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
+                  CircularProgressIndicator(color: Colors.blueAccent),
+                  SizedBox(height: 16),
+                  Text("Initializing camera...", style: TextStyle(color: Colors.white70)),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
+            )
+          : !_hasCameraPermission
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.amber, width: 2),
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.amber, size: 40),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          "Camera Permission Required",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Attendance Manager requires access to your camera to scan employee QR passes at office gates.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.4),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: const Icon(Icons.lock_open),
+                            label: const Text("Grant Camera Permission", style: TextStyle(fontWeight: FontWeight.bold)),
+                            onPressed: _checkAndRequestCameraPermission,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextButton(
+                          onPressed: () => openAppSettings(),
+                          child: const Text("Open Phone App Settings", style: TextStyle(color: Colors.white54)),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Stack(
+                  children: [
+                    MobileScanner(
+                      controller: _cameraController,
+                      onDetect: _onDetect,
+                      errorBuilder: (context, error, child) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                                const SizedBox(height: 12),
+                                Text(
+                                  "Camera Error: ${error.errorCode.name}",
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 14),
+                                ElevatedButton(
+                                  onPressed: () => openAppSettings(),
+                                  child: const Text("Open App Permissions"),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    // Viewfinder box overlay
+                    Center(
+                      child: Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blueAccent, width: 2.5),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 30,
+                      left: 20,
+                      right: 20,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.75),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.qr_code_scanner, color: Colors.blueAccent),
+                            SizedBox(width: 10),
+                            Text(
+                              "Point camera at employee QR badge",
+                              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
     );
   }
 }
