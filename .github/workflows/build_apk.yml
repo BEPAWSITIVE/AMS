@@ -44,10 +44,10 @@ jobs:
             fi
           done
           
-          # Add Camera, Flash and Network permissions to AndroidManifest.xml
+          # Add Camera, Flash, Network and APK Install permissions to AndroidManifest.xml
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST" ]; then
-            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />' "$MANIFEST"
+            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />' "$MANIFEST"
           fi
           
           # Grant execution rights to Gradle wrapper
@@ -71,7 +71,7 @@ jobs:
         with:
           tag_name: latest
           name: "Attendance Manager (Latest Update)"
-          body: "Latest automated release. Tap the 'Check & Install Latest Update' button inside the app Settings to update automatically!"
+          body: "Latest automated release. Tap the 'Check & Install Latest Update' button inside the app Settings to update directly inside the app!"
           files: flutter_app/build/app/outputs/flutter-apk/app-release.apk
           make_latest: true
         env:

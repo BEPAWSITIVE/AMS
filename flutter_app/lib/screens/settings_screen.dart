@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:apk_sideload/install_apk.dart';
 import 'package:intl/intl.dart';
 import '../services/sync_service.dart';
 import '../database/db_helper.dart';
@@ -57,6 +59,111 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _downloadAndInstallDirectly(String downloadUrl) async {
+    // Show download progress dialog
+    double progress = 0.0;
+    int received = 0;
+    int total = 0;
+    StateSetter? dialogSetState;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          dialogSetState = setModalState;
+          final pct = (progress * 100).toInt();
+          final receivedMb = (received / (1024 * 1024)).toStringAsFixed(1);
+          final totalMb = total > 0 ? (total / (1024 * 1024)).toStringAsFixed(1) : "30";
+
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.downloading, color: Colors.blueAccent),
+                SizedBox(width: 10),
+                Text("Downloading Update...", style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Fetching the latest APK directly from GitHub. Android will prompt you to install automatically.",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 18),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: total > 0 ? progress : null,
+                    minHeight: 10,
+                    backgroundColor: const Color(0xFF0F172A),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("$pct% complete", style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text("$receivedMb MB / $totalMb MB", style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    try {
+      final client = http.Client();
+      final request = http.Request('GET', Uri.parse(downloadUrl));
+      final response = await client.send(request);
+
+      total = response.contentLength ?? 0;
+      final tempDir = await getTemporaryDirectory();
+      final apkFile = File('${tempDir.path}/attendance_update.apk');
+      if (await apkFile.exists()) {
+        await apkFile.delete();
+      }
+
+      final sink = apkFile.openWrite();
+
+      await response.stream.listen((chunk) {
+        sink.add(chunk);
+        received += chunk.length;
+        if (total > 0 && dialogSetState != null) {
+          dialogSetState!(() {
+            progress = received / total;
+          });
+        }
+      }).asFuture();
+
+      await sink.close();
+
+      // Close progress dialog
+      if (mounted) Navigator.pop(context);
+
+      // Trigger native Android package installer
+      await InstallApk().installApk(apkFile.path);
+
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close dialog if open
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Download error: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _checkForAppUpdates() async {
     setState(() => _isCheckingUpdate = true);
 
@@ -74,7 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return;
       }
 
-      // Check GitHub Releases API
+      // Check GitHub Releases API for the latest published release
       final apiUrl = Uri.parse("https://api.github.com/repos/$GITHUB_REPO/releases/tags/latest");
       final response = await http.get(apiUrl, headers: {
         'Accept': 'application/vnd.github.v3+json',
@@ -83,16 +190,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       String downloadUrl = DIRECT_APK_DOWNLOAD_URL;
       String releaseDateStr = "Latest Release";
-      String releaseNotes = "Includes latest fixes and features pushed to repository.";
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['published_at'] != null) {
           final dt = DateTime.parse(data['published_at']).toLocal();
           releaseDateStr = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
-        }
-        if (data['body'] != null && data['body'].toString().isNotEmpty) {
-          releaseNotes = data['body'].toString();
         }
 
         final assets = data['assets'] as List<dynamic>?;
@@ -118,7 +221,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Icon(Icons.system_update, color: Colors.blueAccent),
               SizedBox(width: 10),
-              Text("App Update Available", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text("App Update Ready", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
@@ -126,7 +229,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "A fresh build of Attendance Manager is ready on GitHub.",
+                "A new version of Attendance Manager is ready on GitHub.",
                 style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 12),
@@ -154,17 +257,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text(releaseDateStr, style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12)),
                       ],
                     ),
-                    const Divider(color: Colors.white12, height: 16),
-                    Text(
-                      releaseNotes,
-                      style: const TextStyle(color: Colors.white60, fontSize: 11, fontStyle: FontStyle.italic),
-                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 14),
               const Text(
-                "Tapping 'Download & Update' will download the latest APK directly to your phone to install in seconds.",
+                "Tap below to download directly and trigger the Android update dialog.",
                 style: TextStyle(color: Colors.white54, fontSize: 12),
               ),
             ],
@@ -181,17 +279,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
               icon: const Icon(Icons.download, size: 18),
-              label: const Text("Download & Update", style: TextStyle(fontWeight: FontWeight.bold)),
-              onPressed: () async {
+              label: const Text("Update Directly Now", style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () {
                 Navigator.pop(ctx);
-                final uri = Uri.parse(downloadUrl);
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                } else {
-                  // Fallback to GitHub Releases web page
-                  final fallback = Uri.parse("https://github.com/$GITHUB_REPO/releases");
-                  await launchUrl(fallback, mode: LaunchMode.externalApplication);
-                }
+                _downloadAndInstallDirectly(downloadUrl);
               },
             ),
           ],
@@ -200,24 +291,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     } catch (e) {
       if (mounted) {
-        // Fallback option in case of network timeout
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: const Text("Update via GitHub", style: TextStyle(color: Colors.white)),
-            content: Text("Error fetching update metadata: $e\n\nWould you like to open the GitHub Releases page to download the latest APK directly?", style: const TextStyle(color: Colors.white70)),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  final uri = Uri.parse(DIRECT_APK_DOWNLOAD_URL);
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                },
-                child: const Text("Download Latest APK"),
-              ),
-            ],
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Could not connect to update server: $e"),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -290,7 +367,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "Connected to GitHub repo (BEPAWSITIVE/AMS). Tap below to check and install the latest APK build automatically.",
+                    "Connected to GitHub repo (BEPAWSITIVE/AMS). Tap below to check, download, and install the latest APK directly without opening a browser.",
                     style: TextStyle(color: Colors.white60, fontSize: 13),
                   ),
                   const SizedBox(height: 14),
