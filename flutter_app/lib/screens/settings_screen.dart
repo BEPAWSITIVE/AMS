@@ -251,7 +251,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Current Version:", style: TextStyle(color: Colors.black54, fontSize: 12)),
-                        Text(CURRENT_APP_VERSION, style: const TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold, fontSize: 12)),
+                        Text(CURRENT_APP_VERSION, style: TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold, fontSize: 12)),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -259,7 +259,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Updated on GitHub:", style: TextStyle(color: Colors.black54, fontSize: 12)),
-                        Text(releaseDateStr, style: const TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
+                        Text(releaseDateStr, style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
                       ],
                     ),
                   ],

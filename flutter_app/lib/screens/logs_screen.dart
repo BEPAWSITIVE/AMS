@@ -154,7 +154,7 @@ class _LogsScreenState extends State<LogsScreen> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text("In: ${r.inTime}", style: const TextStyle(color: Colors.green.shade700, fontSize: 13, fontWeight: FontWeight.w600)),
+                                        Text("In: ${r.inTime}", style: TextStyle(color: Colors.green.shade700, fontSize: 13, fontWeight: FontWeight.w600)),
                                         Text("Out: ${r.outTime ?? 'Pending'}", style: const TextStyle(color: Colors.blueAccent, fontSize: 13, fontWeight: FontWeight.w600)),
                                         Text("Total: ${r.totalHours ?? '--'}", style: const TextStyle(color: Colors.black54, fontSize: 13)),
                                       ],
