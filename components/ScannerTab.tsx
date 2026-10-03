@@ -162,25 +162,12 @@ export default function ScannerTab() {
           
           <div id="reader" className="w-full h-full absolute inset-0 opacity-80 mix-blend-screen"></div>
 
-          {/* Decorative Corner Brackets */}
-          <div className="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between z-10">
-            <div className="flex justify-between">
-              <div className="w-12 h-12 border-l-4 border-t-4 border-[#3B82F6] rounded-tl-xl"></div>
-              <div className="w-12 h-12 border-r-4 border-t-4 border-[#3B82F6] rounded-tr-xl"></div>
-            </div>
-            <div className="flex justify-between">
-              <div className="w-12 h-12 border-l-4 border-b-4 border-[#3B82F6] rounded-bl-xl"></div>
-              <div className="w-12 h-12 border-r-4 border-b-4 border-[#3B82F6] rounded-br-xl"></div>
-            </div>
-          </div>
+
 
           {/* Glowing Scan Line overlay */}
           <div className="absolute top-1/2 left-0 w-full h-[2px] bg-blue-400 shadow-[0_0_15px_5px_rgba(59,130,246,0.5)] z-10 opacity-70 animate-pulse"></div>
 
-          {/* Center QR Reticle Icon */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <QrCode className="text-white opacity-40" size={60} strokeWidth={1.5} />
-          </div>
+
 
           {/* Overlay Result Message */}
           {scanResult && (
