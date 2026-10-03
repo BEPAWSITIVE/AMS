@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -62,3 +65,14 @@ jobs:
         with:
           name: Attendance-Manager-Release-APK
           path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Publish GitHub Release (Latest APK)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Attendance Manager (Latest Update)"
+          body: "Latest automated release. Tap the 'Check & Install Latest Update' button inside the app Settings to update automatically!"
+          files: flutter_app/build/app/outputs/flutter-apk/app-release.apk
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
