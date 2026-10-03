@@ -41,23 +41,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
 
+  Widget _getBody() {
+    switch (_currentIndex) {
+      case 0:
+        return const ScannerScreen();
+      case 1:
+        return const EmployeeScreen();
+      case 2:
+        return const LogsScreen();
+      case 3:
+        return const SettingsScreen();
+      default:
+        return const ScannerScreen();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: () {
-        switch (_currentIndex) {
-          case 0:
-            return const ScannerScreen();
-          case 1:
-            return const EmployeeScreen();
-          case 2:
-            return const LogsScreen();
-          case 3:
-            return const SettingsScreen();
-          default:
-            return const ScannerScreen();
-        }
-      }(),
+      body: _getBody(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
