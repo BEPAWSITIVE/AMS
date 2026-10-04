@@ -32,7 +32,6 @@ export default function SettingsTab() {
     };
     checkQueue();
     
-    // Auto-sync when coming online
     const handleOnline = async () => {
       checkOffline();
       
@@ -41,7 +40,11 @@ export default function SettingsTab() {
       if (emps.length > 0) {
         for (const emp of emps) {
           const { error } = await supabase.from('employees').upsert(emp);
-          if (!error) await localdb.employeeQueue.delete(emp.empId);
+          if (!error) {
+            await localdb.employeeQueue.delete(emp.empId);
+          } else {
+            console.error("Sync emp error:", error);
+          }
         }
       }
       
@@ -52,12 +55,20 @@ export default function SettingsTab() {
           const { error } = await supabase.from('attendance').upsert(record);
           if (!error) {
             await localdb.syncQueue.delete(record.recordId);
+          } else {
+            console.error("Sync attendance error:", error);
           }
         }
       }
       
       checkQueue();
     };
+    
+    // Auto-sync immediately if online on mount
+    if (navigator.onLine) {
+      handleOnline();
+    }
+    
     window.addEventListener('online', handleOnline);
 
     return () => {
@@ -109,8 +120,22 @@ export default function SettingsTab() {
         )}
 
         {pendingSync > 0 && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-            <p className="font-bold">{pendingSync} records waiting to sync.</p>
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm flex items-center justify-between">
+            <span className="font-bold text-blue-800">{pendingSync} records waiting to sync.</span>
+            <button 
+              onClick={() => {
+                if (navigator.onLine) {
+                  // Re-trigger the same sync logic manually
+                  const event = new Event('online');
+                  window.dispatchEvent(event);
+                } else {
+                  alert("You are still offline!");
+                }
+              }}
+              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium text-xs shadow-sm hover:bg-blue-700"
+            >
+              Sync Now
+            </button>
           </div>
         )}
       </div>
