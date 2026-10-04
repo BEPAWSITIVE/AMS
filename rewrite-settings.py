@@ -1,4 +1,6 @@
-"use client";
+import sys
+
+content = """"use client";
 import { Database, CheckCircle2 } from "lucide-react";
 
 export default function SettingsTab() {
@@ -31,3 +33,6 @@ export default function SettingsTab() {
     </div>
   );
 }
+"""
+open('components/SettingsTab.tsx', 'w', encoding='utf-8').write(content)
+print("Done")

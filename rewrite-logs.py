@@ -1,4 +1,6 @@
-"use client";
+import sys
+
+content = """"use client";
 import { useEffect, useState } from "react";
 import { supabase, AttendanceRecord } from "@/lib/supabase";
 import { User, LogIn, LogOut, CheckCircle2, CloudOff, ClipboardList } from "lucide-react";
@@ -84,3 +86,6 @@ export default function LogsTab() {
     </div>
   );
 }
+"""
+open('components/LogsTab.tsx', 'w', encoding='utf-8').write(content)
+print("Done")

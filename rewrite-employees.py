@@ -1,4 +1,6 @@
-"use client";
+import sys
+
+content = """"use client";
 import { useState, useEffect } from "react";
 import { supabase, Employee } from "@/lib/supabase";
 import { QRCodeCanvas } from "qrcode.react";
@@ -222,7 +224,7 @@ export default function EmployeesTab() {
                 
                 cardCanvas.toBlob(async (blob) => {
                   if (!blob) return;
-                  const file = new File([blob], `${selectedEmployee.name.replace(/\s+/g, '_')}_Pass.png`, { type: "image/png" });
+                  const file = new File([blob], `${selectedEmployee.name.replace(/\\s+/g, '_')}_Pass.png`, { type: "image/png" });
                   
                   if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     try {
@@ -246,9 +248,9 @@ export default function EmployeesTab() {
                     
                     let waUrl = "https://wa.me/";
                     if (selectedEmployee.phone) {
-                      waUrl += selectedEmployee.phone.replace(/\D/g,'');
+                      waUrl += selectedEmployee.phone.replace(/\\D/g,'');
                     }
-                    waUrl += "?text=" + encodeURIComponent(`Here is the Attendance QR Pass for ${selectedEmployee.name}.\n\nThe pass image has been downloaded to your device, please attach it to this message!`);
+                    waUrl += "?text=" + encodeURIComponent(`Here is the Attendance QR Pass for ${selectedEmployee.name}.\\n\\nThe pass image has been downloaded to your device, please attach it to this message!`);
                     
                     if (confirm("The QR Pass has been downloaded. Click OK to open WhatsApp now, and don't forget to attach the downloaded image!")) {
                       window.open(waUrl, "_blank");
@@ -266,3 +268,6 @@ export default function EmployeesTab() {
     </div>
   );
 }
+"""
+open('components/EmployeesTab.tsx', 'w').write(content)
+print("Done")

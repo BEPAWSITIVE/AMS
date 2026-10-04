@@ -1,4 +1,6 @@
-"use client";
+import sys
+
+content = """"use client";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { CheckCircle2, XCircle, ChevronRight, QrCode, ClipboardList } from "lucide-react";
@@ -193,3 +195,6 @@ export default function ScannerTab() {
     </div>
   );
 }
+"""
+open('components/ScannerTab.tsx', 'w', encoding='utf-8').write(content)
+print("Done")
