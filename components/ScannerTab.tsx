@@ -68,6 +68,10 @@ export default function ScannerTab() {
       const empId = data.empId;
       if (!empId) throw new Error("Invalid format");
 
+      const today = new Date();
+      const dateStr = today.toISOString().split("T")[0];
+      const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
       let empData = null;
       let existingRecords: any[] | null = null;
       
