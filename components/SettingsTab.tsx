@@ -26,25 +26,37 @@ export default function SettingsTab() {
 
     // Check Sync Queue
     const checkQueue = async () => {
-      const count = await localdb.syncQueue.count();
-      setPendingSync(count);
+      const attCount = await localdb.syncQueue.count();
+      const empCount = await localdb.employeeQueue.count();
+      setPendingSync(attCount + empCount);
     };
     checkQueue();
     
     // Auto-sync when coming online
     const handleOnline = async () => {
       checkOffline();
+      
+      // Sync Employees first
+      const emps = await localdb.employeeQueue.toArray();
+      if (emps.length > 0) {
+        for (const emp of emps) {
+          const { error } = await supabase.from('employees').upsert(emp);
+          if (!error) await localdb.employeeQueue.delete(emp.empId);
+        }
+      }
+      
+      // Sync Attendance
       const records = await localdb.syncQueue.toArray();
       if (records.length > 0) {
-        // Simple sync: push all records
         for (const record of records) {
           const { error } = await supabase.from('attendance').upsert(record);
           if (!error) {
             await localdb.syncQueue.delete(record.recordId);
           }
         }
-        checkQueue();
       }
+      
+      checkQueue();
     };
     window.addEventListener('online', handleOnline);
 

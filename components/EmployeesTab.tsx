@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase, Employee } from "@/lib/supabase";
+import { localdb } from "@/lib/localdb";
 import { QRCodeCanvas } from "qrcode.react";
 import { MessageCircle, X } from "lucide-react";
 
@@ -20,16 +21,27 @@ export default function EmployeesTab() {
   }, []);
 
   async function fetchEmployees() {
+    let allEmps: Employee[] = [];
     if (navigator.onLine) {
       const { data, error } = await supabase.from('employees').select('*').order('createdAt', { ascending: false });
       if (!error && data) {
-        setEmployees(data);
+        allEmps = data;
         localStorage.setItem('cached_employees', JSON.stringify(data));
       }
     } else {
       const cached = localStorage.getItem('cached_employees');
-      if (cached) setEmployees(JSON.parse(cached));
+      if (cached) allEmps = JSON.parse(cached);
     }
+    
+    // Merge any offline queued employees that might not be synced yet
+    const queuedEmps = await localdb.employeeQueue.toArray();
+    const merged = [...queuedEmps, ...allEmps].reduce((acc, curr) => {
+      if (!acc.find(item => item.empId === curr.empId)) acc.push(curr);
+      return acc;
+    }, [] as Employee[]);
+    
+    merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setEmployees(merged);
     setLoading(false);
   }
 
@@ -116,13 +128,26 @@ export default function EmployeesTab() {
     e.preventDefault();
     if (!empId || !name) return;
     
-    const { error } = await supabase.from('employees').insert([{
-      empId, name, department, phone
-    }]);
+    const newEmp = {
+      empId, name, department, phone, createdAt: new Date().toISOString()
+    };
     
-    if (error) {
-      alert("Error adding employee: " + error.message);
-      return;
+    if (navigator.onLine) {
+      try {
+        const { error } = await supabase.from('employees').insert([newEmp]);
+        if (error) throw error;
+      } catch (err: any) {
+        alert("Error adding employee: " + err.message);
+        return;
+      }
+    } else {
+      // Save locally if offline
+      await localdb.employeeQueue.put(newEmp);
+      // Also update the cached list so they show up immediately
+      const cached = localStorage.getItem('cached_employees');
+      const currentList = cached ? JSON.parse(cached) : [];
+      currentList.unshift(newEmp);
+      localStorage.setItem('cached_employees', JSON.stringify(currentList));
     }
     
     setShowForm(false);
