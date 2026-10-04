@@ -18,6 +18,26 @@ export default function EmployeesTab() {
 
   useEffect(() => {
     fetchEmployees();
+    
+    const channel = supabase
+      .channel('employees_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'employees' },
+        (payload) => {
+          fetchEmployees();
+        }
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      if (navigator.onLine) fetchEmployees();
+    }, 30000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, []);
 
   async function fetchEmployees() {
