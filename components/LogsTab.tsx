@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase, AttendanceRecord } from "@/lib/supabase";
+import { localdb } from "@/lib/localdb";
 import { User, LogIn, LogOut, CheckCircle2, CloudOff, ClipboardList } from "lucide-react";
 
 export default function LogsTab() {
@@ -12,10 +13,38 @@ export default function LogsTab() {
   }, []);
 
   async function fetchLogs() {
-    const { data, error } = await supabase.from('attendance').select('*').order('inTimestamp', { ascending: false });
-    if (!error && data) {
-      setLogs(data);
+    let allLogs: AttendanceRecord[] = [];
+    
+    if (navigator.onLine) {
+      const { data, error } = await supabase.from('attendance').select('*').order('inTimestamp', { ascending: false });
+      if (!error && data) {
+        allLogs = data;
+        localStorage.setItem('cached_logs', JSON.stringify(data));
+      }
+    } else {
+      const cached = localStorage.getItem('cached_logs');
+      if (cached) allLogs = JSON.parse(cached);
     }
+
+    // Add local pending records
+    const queue = await localdb.syncQueue.toArray();
+    
+    // Merge without duplicates (using recordId), prioritizing queue over cached
+    const merged = [...queue, ...allLogs].reduce((acc, curr) => {
+      if (!acc.find(item => item.recordId === curr.recordId)) {
+        acc.push(curr);
+      } else {
+        // If it exists, update it if the queue version is newer (queue version is always newer)
+        const idx = acc.findIndex(item => item.recordId === curr.recordId);
+        if (queue.find(q => q.recordId === curr.recordId)) {
+          acc[idx] = curr;
+        }
+      }
+      return acc;
+    }, [] as AttendanceRecord[]);
+
+    merged.sort((a, b) => b.inTimestamp - a.inTimestamp);
+    setLogs(merged);
     setLoading(false);
   }
 

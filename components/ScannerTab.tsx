@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { localdb } from "@/lib/localdb";
 import { CheckCircle2, XCircle, ChevronRight, QrCode, ClipboardList } from "lucide-react";
 
 export default function ScannerTab() {
@@ -67,9 +68,31 @@ export default function ScannerTab() {
       const empId = data.empId;
       if (!empId) throw new Error("Invalid format");
 
-      const { data: empData, error: empError } = await supabase.from('employees').select('*').eq('empId', empId).single();
+      let empData = null;
+      let existingRecords: any[] | null = null;
       
-      if (empError || !empData) {
+      if (navigator.onLine) {
+        const { data } = await supabase.from('employees').select('*').eq('empId', empId).single();
+        empData = data;
+        const { data: existing } = await supabase
+          .from('attendance')
+          .select('*')
+          .eq('date', dateStr)
+          .eq('empId', empId)
+          .order('inTimestamp', { ascending: true });
+        existingRecords = existing;
+      } else {
+        const cached = localStorage.getItem('cached_employees');
+        if (cached) {
+          const employees = JSON.parse(cached);
+          empData = employees.find((e: any) => e.empId === empId);
+        }
+        // If offline, check local sync queue for existing IN records today
+        const queue = await localdb.syncQueue.where({ empId: empId, date: dateStr }).toArray();
+        existingRecords = queue;
+      }
+      
+      if (!empData) {
         setScanResult({ success: false, msg: `Employee ${empId} not found.` });
       } else {
         const emp = empData;
@@ -77,12 +100,7 @@ export default function ScannerTab() {
         const dateStr = today.toISOString().split("T")[0];
         const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
-        const { data: existingRecords } = await supabase
-          .from('attendance')
-          .select('*')
-          .eq('date', dateStr)
-          .eq('empId', empId)
-          .order('inTimestamp', { ascending: true });
+
           
         let lastRecord = existingRecords && existingRecords.length > 0 ? existingRecords[existingRecords.length - 1] : null;
 
@@ -93,19 +111,27 @@ export default function ScannerTab() {
           const hrs = Math.floor(diffMs / 3600000);
           const mins = Math.floor((diffMs % 3600000) / 60000);
           
-          await supabase.from('attendance').update({
+          const updatedRecord = {
+            ...lastRecord,
             outTime: timeStr,
             outTimestamp: outTimestamp,
             totalHours: `${hrs}h ${mins}m`,
             status: 'OUT',
-            isSynced: 1,
+            isSynced: navigator.onLine ? 1 : 0,
             updatedAt: today.toISOString()
-          }).eq('recordId', lastRecord.recordId);
+          };
+
+          if (navigator.onLine) {
+            await supabase.from('attendance').update(updatedRecord).eq('recordId', lastRecord.recordId);
+          } else {
+            await localdb.syncQueue.put(updatedRecord);
+          }
           
-          setScanResult({ success: true, msg: `${emp.name} Checked OUT at ${timeStr}` });
+          setScanResult({ success: true, msg: `${emp.name} Checked OUT at ${timeStr}` + (navigator.onLine ? '' : ' (Offline)') });
         } else {
           // Check in
-          await supabase.from('attendance').insert([{
+          const newRecord = {
+            recordId: crypto.randomUUID(),
             empId: emp.empId,
             empName: emp.name,
             department: emp.department,
@@ -113,11 +139,17 @@ export default function ScannerTab() {
             inTime: timeStr,
             inTimestamp: today.getTime(),
             status: 'IN',
-            isSynced: 1,
+            isSynced: navigator.onLine ? 1 : 0,
             updatedAt: today.toISOString()
-          }]);
+          };
+
+          if (navigator.onLine) {
+            await supabase.from('attendance').insert([newRecord]);
+          } else {
+            await localdb.syncQueue.put(newRecord);
+          }
           
-          setScanResult({ success: true, msg: `${emp.name} Checked IN at ${timeStr}` });
+          setScanResult({ success: true, msg: `${emp.name} Checked IN at ${timeStr}` + (navigator.onLine ? '' : ' (Offline)') });
         }
       }
     } catch (err: any) {

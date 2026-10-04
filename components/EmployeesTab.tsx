@@ -20,9 +20,15 @@ export default function EmployeesTab() {
   }, []);
 
   async function fetchEmployees() {
-    const { data, error } = await supabase.from('employees').select('*').order('createdAt', { ascending: false });
-    if (!error && data) {
-      setEmployees(data);
+    if (navigator.onLine) {
+      const { data, error } = await supabase.from('employees').select('*').order('createdAt', { ascending: false });
+      if (!error && data) {
+        setEmployees(data);
+        localStorage.setItem('cached_employees', JSON.stringify(data));
+      }
+    } else {
+      const cached = localStorage.getItem('cached_employees');
+      if (cached) setEmployees(JSON.parse(cached));
     }
     setLoading(false);
   }
