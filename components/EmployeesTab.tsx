@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase, Employee } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
 import { QRCodeCanvas } from "qrcode.react";
-import { MessageCircle, X, Download } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 
 export default function EmployeesTab() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -264,24 +264,6 @@ export default function EmployeesTab() {
               />
             </div>
             
-            <div className="w-full flex space-x-2 mt-1">
-              <button 
-                onClick={() => {
-                  const qrCanvas = document.getElementById("qr-canvas") as HTMLCanvasElement;
-                  if (!qrCanvas) return;
-                  const cardCanvas = generateCardCanvas(qrCanvas, selectedEmployee);
-                  const url = cardCanvas.toDataURL("image/png");
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `${selectedEmployee.name.replace(/\s+/g, '_')}_Pass.png`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                }}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl flex items-center justify-center font-bold shadow-sm transition-colors text-sm"
-              >
-                <Download size={18} className="mr-1" /> Download
-              </button>
             <button 
               onClick={() => {
                 const qrCanvas = document.getElementById("qr-canvas") as HTMLCanvasElement;
@@ -319,13 +301,10 @@ export default function EmployeesTab() {
                         return;
                       }
 
-                      const { data: { publicUrl } } = supabase
-                        .storage
-                        .from('qr-passes')
-                        .getPublicUrl(fileName);
-
+                      const passPageUrl = `${window.location.origin}/pass/${fileName}`;
+                      
                       const cleanPhone = (selectedEmployee.phone || '').replace(/\D/g,'');
-                      const msg = `Hello ${selectedEmployee.name},\n\nOpen the link to view your QR pass and download it:\n${publicUrl}`;
+                      const msg = `Hello ${selectedEmployee.name},\n\nOpen the link to view your QR pass and download it:\n${passPageUrl}`;
                       const waUrl = `https://wa.me/${cleanPhone}?text=` + encodeURIComponent(msg);
                       
                       window.open(waUrl, "_blank");
@@ -349,11 +328,10 @@ export default function EmployeesTab() {
                   }
                 }, "image/png");
               }}
-              className="flex-1 bg-[#25D366] hover:bg-[#1DA851] text-white py-3 rounded-xl flex items-center justify-center font-bold shadow-md transition-colors text-sm"
+              className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white py-3 rounded-xl flex items-center justify-center font-bold shadow-md transition-colors text-sm"
             >
-              <MessageCircle size={18} className="mr-1" /> WhatsApp
+              <MessageCircle size={18} className="mr-2" /> Share to WhatsApp
             </button>
-            </div>
           </div>
         </div>
       )}
