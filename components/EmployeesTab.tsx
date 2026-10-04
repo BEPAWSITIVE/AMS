@@ -287,7 +287,7 @@ export default function EmployeesTab() {
                     a.click();
                     document.body.removeChild(a);
                     
-                    const cleanPhone = selectedEmployee.phone.replace(/\D/g,'');
+                    const cleanPhone = (selectedEmployee.phone || '').replace(/\D/g,'');
                     const waUrl = `https://wa.me/${cleanPhone}?text=` + encodeURIComponent(`Here is your Attendance QR Pass, ${selectedEmployee.name}.\n\n(Please see the attached image below)`);
                     
                     setTimeout(() => {
