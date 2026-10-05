@@ -17,8 +17,6 @@ export default function ScannerTab() {
     profile: Employee;
     lastRecord: AttendanceRecord | null;
   } | null>(null);
-  const [parcelModal, setParcelModal] = useState<{ profile: Employee; lastRecord: AttendanceRecord } | null>(null);
-  const [pickerName, setPickerName] = useState("");
   
   const [driverName, setDriverName] = useState("");
   const [meterReading, setMeterReading] = useState("");
