@@ -14,6 +14,7 @@ export interface Employee {
   category?: string;
   document_url?: string;
   vehicle_plate?: string;
+  group_members?: string;
 }
 
 export interface AttendanceRecord {
