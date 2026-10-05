@@ -28,19 +28,20 @@ export default function Home() {
           </div>
           <div className="leading-tight">
             <h1 className="text-[17px] font-extrabold text-[#1E293B] tracking-tight">Attendance</h1>
-            <h1 className="text-[17px] font-extrabold text-[#2DD4BF] tracking-tight -mt-1">Manager</h1>
+            <h1 className="text-[17px] font-extrabold text-[#10B981] tracking-tight -mt-1">Manager</h1>
+            <p className="text-[10px] font-bold text-gray-400 tracking-wider mt-0.5">Track • Manage • Grow</p>
           </div>
         </div>
         
         <div className="flex space-x-2">
-          <button className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#64748B] hover:text-blue-600">
-            <Zap size={20} className="fill-current" />
+          <button className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#334155] hover:text-blue-600 transition-colors">
+            <Zap size={18} className="fill-current" />
           </button>
-          <button className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#64748B] hover:text-blue-600">
-            <RefreshCw size={20} />
+          <button className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#334155] hover:text-blue-600 transition-colors">
+            <RefreshCw size={18} />
           </button>
-          <button onClick={() => setActiveTab("settings")} className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#64748B] hover:text-blue-600">
-            <Settings size={20} />
+          <button onClick={() => setActiveTab("settings")} className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#334155] hover:text-blue-600 transition-colors">
+            <Settings size={18} className="fill-current" />
           </button>
         </div>
       </header>

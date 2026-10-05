@@ -8,6 +8,7 @@ import { CheckCircle2, AlertCircle, X, Truck } from "lucide-react";
 export default function ScannerTab() {
   const [scanResult, setScanResult] = useState<{ success: boolean; msg: string; isVehicle?: boolean } | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   
   const [vehicleModal, setVehicleModal] = useState<{
@@ -50,11 +51,15 @@ export default function ScannerTab() {
   };
 
   useEffect(() => {
-    startScanner();
+    if (cameraActive) {
+      startScanner();
+    } else {
+      stopScanner();
+    }
     return () => {
       stopScanner();
     };
-  }, []);
+  }, [cameraActive]);
 
   const onScanSuccess = async (decodedText: string) => {
     try {
@@ -62,7 +67,6 @@ export default function ScannerTab() {
       const empId = data.empId;
       if (!empId) throw new Error("Invalid format");
 
-      // Pause scanner while processing
       if (scannerRef.current) {
         scannerRef.current.pause();
       }
@@ -107,12 +111,10 @@ export default function ScannerTab() {
       let lastRecord = existingRecords.length > 0 ? existingRecords[existingRecords.length - 1] : null;
 
       if (emp.category === 'Vehicle') {
-        // Vehicle Flow - open modal
         setVehicleModal({ profile: emp, lastRecord });
-        return; // wait for user input
+        return; 
       }
 
-      // Standard Staff / Visitor Flow
       if (lastRecord && lastRecord.status === 'IN') {
         const outTimestamp = today.getTime();
         const diffMs = outTimestamp - lastRecord.inTimestamp;
@@ -175,15 +177,13 @@ export default function ScannerTab() {
     if (!vehicleModal) return;
     
     const { profile, lastRecord } = vehicleModal;
-    const isDispatching = !lastRecord || lastRecord.status === 'OUT'; // Vehicle is at base, now leaving
+    const isDispatching = !lastRecord || lastRecord.status === 'OUT'; 
     
     const today = new Date();
     const dateStr = today.toISOString().split("T")[0];
     const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     if (isDispatching) {
-      // Create new OUT record (Trip Started)
-      // Note: We use status='IN' to mean 'Trip Active' to match our logic where IN means active session
       const newRecord = {
         recordId: crypto.randomUUID(),
         empId: profile.empId,
@@ -193,7 +193,7 @@ export default function ScannerTab() {
         date: dateStr,
         inTime: timeStr,
         inTimestamp: today.getTime(),
-        status: 'IN', // 'IN' means actively on a trip
+        status: 'IN',
         driver_name: driverName,
         meter_out: parseFloat(meterReading),
         isSynced: navigator.onLine ? 1 : 0,
@@ -207,7 +207,6 @@ export default function ScannerTab() {
       }
       setScanResult({ success: true, isVehicle: true, msg: `Vehicle ${profile.name} Dispatched by ${driverName}` + (navigator.onLine ? '' : ' (Offline)') });
     } else {
-      // Vehicle is returning (Trip Complete)
       const meterOut = lastRecord.meter_out || 0;
       const meterIn = parseFloat(meterReading);
       const consumed = meterIn >= meterOut ? meterIn - meterOut : 0;
@@ -218,7 +217,7 @@ export default function ScannerTab() {
         outTimestamp: today.getTime(),
         meter_in: meterIn,
         totalHours: `${consumed} units consumed`,
-        status: 'OUT', // 'OUT' means trip finished (back at base)
+        status: 'OUT',
         isSynced: navigator.onLine ? 1 : 0,
         updatedAt: today.toISOString()
       };
@@ -249,14 +248,67 @@ export default function ScannerTab() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-0 overflow-hidden flex items-center justify-center">
+    <div className="w-full h-full flex flex-col relative bg-transparent">
       
-      {/* Scanner Viewport */}
-      <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
+      {/* Background decorations for empty state */}
+      {!cameraActive && (
+        <>
+          <div className="fixed bottom-32 -left-6 opacity-80 pointer-events-none z-0">
+            <svg width="120" height="150" viewBox="0 0 100 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 150C10 100 40 70 80 50" stroke="#34D399" strokeWidth="4" strokeLinecap="round" />
+              <path d="M40 100C30 80 15 70 0 70C15 90 20 100 40 100Z" fill="#34D399" />
+              <path d="M60 70C50 50 35 40 20 40C35 60 40 70 60 70Z" fill="#34D399" />
+              <path d="M80 50C70 30 55 20 40 20C55 40 60 50 80 50Z" fill="#10B981" />
+            </svg>
+          </div>
+          <div className="fixed bottom-40 -left-4 w-20 h-12 bg-blue-100 rounded-full opacity-60 mix-blend-multiply blur-sm z-0"></div>
+        </>
+      )}
+
+      {/* Main Scanner Container */}
+      <div className={`flex-1 flex flex-col items-center justify-center ${cameraActive ? 'bg-black fixed inset-0 z-[100]' : 'z-10'}`}>
+        
+        {cameraActive && (
+          <div className="absolute top-12 right-6 z-50">
+            <button 
+              onClick={() => setCameraActive(false)}
+              className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-white/30 transition-colors shadow-lg border border-white/10"
+            >
+              <X size={24} />
+            </button>
+          </div>
+        )}
+
+        {/* Scanner Viewport */}
+        <div className={`${cameraActive ? 'absolute inset-0 flex items-center justify-center z-0' : 'hidden'}`}>
+          <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
+          {cameraActive && <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none"></div>}
+        </div>
+
+        {/* Empty State / Button */}
+        {!cameraActive && (
+          <div className="absolute bottom-6 left-0 right-0 px-6 animate-fade-in z-20">
+            <button 
+              onClick={() => setCameraActive(true)}
+              className="w-full bg-[#EAF3FF] hover:bg-[#dce9fa] transition-colors py-4 px-4 rounded-[20px] flex items-center justify-between shadow-sm"
+            >
+              <div className="flex items-center">
+                <div className="bg-[#3B82F6] text-white p-2.5 rounded-xl mr-4 shadow-sm">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="3"></rect><rect x="14" y="7" width="3" height="3"></rect><rect x="7" y="14" width="3" height="3"></rect><rect x="14" y="14" width="3" height="3"></rect></svg>
+                </div>
+                <span className="text-[#1E293B] font-bold text-[13px]">Point camera at employee QR badge</span>
+              </div>
+              <div className="text-[#3B82F6]">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Result Toast */}
       {scanResult && !vehicleModal && (
-        <div className="absolute top-8 left-0 right-0 px-4 z-20 flex justify-center animate-bounce-in">
+        <div className="fixed top-8 left-0 right-0 px-4 z-[110] flex justify-center animate-bounce-in">
           <div className={`px-5 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 w-full max-w-sm
             ${scanResult.success 
               ? (scanResult.isVehicle ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white')
@@ -271,7 +323,7 @@ export default function ScannerTab() {
 
       {/* Vehicle Action Modal */}
       {vehicleModal && (
-        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative">
             <div className="bg-amber-500 p-6 text-white text-center">
               <Truck size={40} className="mx-auto mb-2 opacity-90" />
@@ -349,14 +401,6 @@ export default function ScannerTab() {
           </div>
         </div>
       )}
-
-      {/* Persistent Bottom UI */}
-      <div className="absolute bottom-24 left-0 right-0 px-6">
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl text-center shadow-lg">
-          <p className="text-white font-bold tracking-wide">Ready to Scan</p>
-          <p className="text-white/60 text-sm mt-1">Point camera at ID card</p>
-        </div>
-      </div>
     </div>
   );
 }
