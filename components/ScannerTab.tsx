@@ -249,12 +249,10 @@ export default function ScannerTab() {
   };
 
   return (
-    <div className="relative min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden pb-16">
+    <div className="fixed inset-0 bg-black z-0 overflow-hidden flex items-center justify-center">
       
       {/* Scanner Viewport */}
-      <div className="w-full max-w-md mx-auto aspect-[3/4] flex items-center justify-center relative bg-gray-900 rounded-3xl overflow-hidden shadow-2xl">
-        <div id="reader" className="w-full h-full flex items-center justify-center [&>video]:object-cover"></div>
-      </div>
+      <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
 
       {/* Result Toast */}
       {scanResult && !vehicleModal && (
