@@ -19,6 +19,7 @@ export default function ScannerTab() {
   
   const [driverName, setDriverName] = useState("");
   const [meterReading, setMeterReading] = useState("");
+  const [visitedLocation, setVisitedLocation] = useState("");
 
   const startScanner = async () => {
     if (isScanning || scannerRef.current) return;
@@ -218,6 +219,7 @@ export default function ScannerTab() {
         outTime: timeStr,
         outTimestamp: today.getTime(),
         meter_in: meterIn,
+        location: visitedLocation,
         totalHours: `${consumed} units consumed`,
         status: 'OUT',
         isSynced: navigator.onLine ? 1 : 0,
@@ -235,6 +237,7 @@ export default function ScannerTab() {
     setVehicleModal(null);
     setDriverName("");
     setMeterReading("");
+    setVisitedLocation("");
     
     setTimeout(() => {
       setScanResult(null);
@@ -246,6 +249,7 @@ export default function ScannerTab() {
     setVehicleModal(null);
     setDriverName("");
     setMeterReading("");
+    setVisitedLocation("");
     if (scannerRef.current) scannerRef.current.resume();
   };
 
@@ -395,7 +399,18 @@ export default function ScannerTab() {
                       step="any"
                       value={meterReading}
                       onChange={e => setMeterReading(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                      className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-mono mb-3"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Location Visited *</label>
+                    <input 
+                      type="text" 
+                      value={visitedLocation}
+                      onChange={e => setVisitedLocation(e.target.value)}
+                      placeholder="e.g. City Hospital, Downtown"
+                      className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                       required
                     />
                   </div>

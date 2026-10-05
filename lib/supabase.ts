@@ -35,4 +35,5 @@ export interface AttendanceRecord {
   driver_name?: string;
   meter_out?: number;
   meter_in?: number;
+  location?: string;
 }

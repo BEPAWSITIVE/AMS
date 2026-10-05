@@ -144,6 +144,12 @@ export default function LogsTab() {
                     <span className="text-gray-500 font-bold text-xs">Driver:</span>
                     <span className="font-bold text-gray-800">{log.driver_name}</span>
                   </div>
+                  {log.location && (
+                    <div className="flex justify-between mb-2 pb-2 border-b border-amber-200/50">
+                      <span className="text-gray-500 font-bold text-xs">Visited:</span>
+                      <span className="font-bold text-gray-800 truncate pl-2 text-right">{log.location}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <div className="text-center">
                       <span className="block text-[10px] text-gray-400 uppercase font-bold tracking-widest">Out ({log.inTime})</span>
