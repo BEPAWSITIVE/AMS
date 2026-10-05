@@ -1,20 +1,18 @@
 import Dexie, { Table } from 'dexie';
-import { AttendanceRecord, Employee } from './supabase';
 
-export class OfflineDatabase extends Dexie {
-  syncQueue!: Table<AttendanceRecord, string>;
-  employeeQueue!: Table<Employee, string>;
+export class AppDB extends Dexie {
+  syncQueue!: Table<any, string>; 
+  employeeQueue!: Table<any, string>;
+  parcelQueue!: Table<any, string>;
 
   constructor() {
-    super('AttendanceOfflineDB');
-    this.version(1).stores({
-      syncQueue: 'recordId, empId, date'
-    });
-    this.version(2).stores({
+    super('AttendanceDB');
+    this.version(3).stores({
       syncQueue: 'recordId, empId, date',
-      employeeQueue: 'empId'
+      employeeQueue: 'empId',
+      parcelQueue: 'id'
     });
   }
 }
 
-export const localdb = new OfflineDatabase();
+export const localdb = new AppDB();

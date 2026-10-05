@@ -37,3 +37,15 @@ export interface AttendanceRecord {
   meter_in?: number;
   location?: string;
 }
+
+export interface Parcel {
+  id: string;
+  company_name: string;
+  recipient_name: string;
+  barcode?: string;
+  photo_url?: string;
+  received_at: string;
+  status: string; // 'At Gate' | 'Picked Up'
+  picked_up_by?: string;
+  picked_up_at?: string;
+}

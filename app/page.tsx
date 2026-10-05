@@ -6,6 +6,8 @@ import ScannerTab from '@/components/ScannerTab';
 import EmployeesTab from '@/components/EmployeesTab';
 import LogsTab from '@/components/LogsTab';
 import SettingsTab from '@/components/SettingsTab';
+import ParcelsTab from '@/components/ParcelsTab';
+import { Package } from 'lucide-react';
 import Image from 'next/image';
 
 export default function Home() {
@@ -51,6 +53,7 @@ export default function Home() {
         {activeTab === "employees" && <EmployeesTab />}
         {activeTab === "logs" && <LogsTab />}
         {activeTab === "settings" && <SettingsTab />}
+        {activeTab === "parcels" && <ParcelsTab />}
       </main>
 
       <nav className="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 flex justify-around p-3 pb-safe shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl">
@@ -61,6 +64,10 @@ export default function Home() {
         <button onClick={() => setActiveTab("employees")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "employees" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
           <Users size={24} className={activeTab === "employees" ? "stroke-2" : "stroke-2"} />
           <span className="text-[10px] mt-1 font-semibold">Employees</span>
+        </button>
+        <button onClick={() => setActiveTab("parcels")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "parcels" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
+          <Package size={24} className={activeTab === "parcels" ? "stroke-2" : "stroke-2"} />
+          <span className="text-[10px] mt-1 font-semibold">Parcels</span>
         </button>
         <button onClick={() => setActiveTab("logs")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "logs" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
           <ClipboardList size={24} className={activeTab === "logs" ? "stroke-2" : "stroke-2"} />
