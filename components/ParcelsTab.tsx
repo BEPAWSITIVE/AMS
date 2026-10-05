@@ -82,7 +82,7 @@ export default function ParcelsTab() {
 
   const handleReceiveParcel = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName || !recipientName) return;
+    if (!companyName) return;
     
     setIsUploading(true);
     let photo_url = "";
@@ -210,14 +210,13 @@ export default function ParcelsTab() {
                 />
               </div>
               <div className="w-1/2">
-                <label className="block text-xs font-bold text-gray-500 mb-1">For Whom *</label>
+                <label className="block text-xs font-bold text-gray-500 mb-1">For Whom</label>
                 <input 
                   type="text" 
                   value={recipientName} 
                   onChange={e => setRecipientName(e.target.value)}
-                  placeholder="Employee Name"
+                  placeholder="Optional"
                   className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-purple-500"
-                  required
                 />
               </div>
             </div>
@@ -304,7 +303,7 @@ export default function ParcelsTab() {
                     
                     <div className="flex justify-between items-start pr-12">
                       <div>
-                        <h4 className="font-bold text-gray-800 text-lg">{p.recipient_name}</h4>
+                        <h4 className="font-bold text-gray-800 text-lg">{p.recipient_name || "Unspecified"}</h4>
                         <p className="text-purple-600 font-bold text-xs uppercase tracking-wider">{p.company_name}</p>
                       </div>
                     </div>
@@ -335,7 +334,7 @@ export default function ParcelsTab() {
                 <div key={p.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 opacity-75">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-bold text-gray-700">{p.recipient_name}</h4>
+                      <h4 className="font-bold text-gray-700">{p.recipient_name || "Unspecified"}</h4>
                       <p className="text-gray-500 font-bold text-xs uppercase tracking-wider">{p.company_name}</p>
                     </div>
                     {p.photo_url && (
@@ -367,7 +366,7 @@ export default function ParcelsTab() {
           <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative">
             <div className="bg-purple-600 p-6 text-white text-center">
               <Package size={40} className="mx-auto mb-2 opacity-90" />
-              <h3 className="text-xl font-bold">{pickupModal.recipient_name}</h3>
+              <h3 className="text-xl font-bold">{pickupModal.recipient_name || "Unspecified"}</h3>
               <p className="opacity-80 text-sm font-bold tracking-widest uppercase mt-1">{pickupModal.company_name}</p>
             </div>
             
