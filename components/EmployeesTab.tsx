@@ -15,7 +15,7 @@ export default function EmployeesTab() {
   const [empId, setEmpId] = useState("");
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState("+91 ");
   const [vehiclePlate, setVehiclePlate] = useState("");
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   
@@ -85,7 +85,7 @@ export default function EmployeesTab() {
     generateNewId("Staff");
     setName("");
     setDepartment("");
-    setPhone("");
+    setPhone("+91 ");
     setVehiclePlate("");
     setDocumentFile(null);
     setShowForm(true);
@@ -332,14 +332,21 @@ export default function EmployeesTab() {
 
             {category === 'Visitor' && (
               <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">ID Document (Aadhaar/Photo)</label>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  capture="environment"
-                  onChange={e => e.target.files && setDocumentFile(e.target.files[0])}
-                  className="w-full bg-gray-50 border border-gray-200 p-2 rounded-xl text-sm"
-                />
+                <label className="block text-xs font-bold text-gray-500 mb-1">ID Document (Take Photo)</label>
+                <div className="relative w-full bg-blue-50 border-2 border-dashed border-blue-200 p-4 rounded-xl text-center hover:bg-blue-100 transition-colors">
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    capture="environment"
+                    onChange={e => e.target.files && setDocumentFile(e.target.files[0])}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    required
+                  />
+                  <div className="text-blue-600 font-bold flex flex-col items-center">
+                    <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    {documentFile ? "Photo Ready! (" + documentFile.name + ")" : "Tap to open Camera & snap ID"}
+                  </div>
+                </div>
               </div>
             )}
 

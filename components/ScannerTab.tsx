@@ -249,11 +249,11 @@ export default function ScannerTab() {
   };
 
   return (
-    <div className="relative min-h-screen bg-black flex flex-col pb-20">
+    <div className="relative h-screen bg-black overflow-hidden">
       
       {/* Scanner Viewport */}
-      <div className="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-        <div id="reader" className="w-full h-full object-cover"></div>
+      <div className="absolute inset-0 z-0 flex items-center justify-center">
+        <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
         
         {/* Safe Area Overlay for aesthetic */}
         <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none"></div>
