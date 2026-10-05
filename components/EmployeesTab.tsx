@@ -272,7 +272,7 @@ export default function EmployeesTab() {
               >
                 <option value="Staff">Staff</option>
                 <option value="Visitor">Visitor / Volunteer</option>
-                <option value="Vehicle">Rescue Vehicle</option>
+                <option value="Vehicle">Vehicle</option>
                 <option value="Parcel">Parcel / Delivery</option>
               </select>
             </div>
