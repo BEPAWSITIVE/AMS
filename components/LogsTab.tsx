@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase, AttendanceRecord } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
 import { Clock, CheckCircle2, UserPlus, Truck, Shield, Package } from "lucide-react";
@@ -12,13 +12,11 @@ export default function LogsTab() {
     fetchLogs();
     
     const channel = supabase
-      .channel('attendance_changes')
+      .channel('schema-db-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'attendance' },
-        (payload) => {
-          fetchLogs();
-        }
+        () => fetchLogs()
       )
       .subscribe();
 
@@ -48,19 +46,20 @@ export default function LogsTab() {
 
     const queue = await localdb.syncQueue.toArray();
     
-    const merged = [...queue, ...allLogs].reduce((acc, curr) => {
-      if (!acc.find(item => item.recordId === curr.recordId)) {
-        acc.push(curr);
+    const merged = [...queue, ...allLogs].reduce((acc: AttendanceRecord[], curr: any) => {
+      const current = curr as AttendanceRecord;
+      if (!acc.find((item: AttendanceRecord) => item.recordId === current.recordId)) {
+        acc.push(current);
       } else {
-        const idx = acc.findIndex(item => item.recordId === curr.recordId);
-        if (queue.find(q => q.recordId === curr.recordId)) {
-          acc[idx] = curr;
+        const idx = acc.findIndex((item: AttendanceRecord) => item.recordId === current.recordId);
+        if (queue.find((q: any) => (q as AttendanceRecord).recordId === current.recordId)) {
+          acc[idx] = current;
         }
       }
       return acc;
     }, [] as AttendanceRecord[]);
 
-    merged.sort((a, b) => b.inTimestamp - a.inTimestamp);
+    merged.sort((a: AttendanceRecord, b: AttendanceRecord) => b.inTimestamp - a.inTimestamp);
     setLogs(merged);
     setLoading(false);
   }
