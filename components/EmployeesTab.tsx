@@ -3,17 +3,23 @@ import { useState, useEffect } from "react";
 import { supabase, Employee } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
 import { QRCodeCanvas } from "qrcode.react";
-import { MessageCircle, X } from "lucide-react";
+import { MessageCircle, X, Download, UserPlus, FileText, Truck, Shield } from "lucide-react";
 
 export default function EmployeesTab() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   
+  // Form states
+  const [category, setCategory] = useState("Staff"); // Staff, Visitor, Vehicle
   const [empId, setEmpId] = useState("");
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
   const [phone, setPhone] = useState("");
+  const [vehiclePlate, setVehiclePlate] = useState("");
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  
+  const [isUploading, setIsUploading] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
@@ -53,7 +59,6 @@ export default function EmployeesTab() {
       if (cached) allEmps = JSON.parse(cached);
     }
     
-    // Merge any offline queued employees that might not be synced yet
     const queuedEmps = await localdb.employeeQueue.toArray();
     const merged = [...queuedEmps, ...allEmps].reduce((acc, curr) => {
       if (!acc.find(item => item.empId === curr.empId)) acc.push(curr);
@@ -65,91 +70,69 @@ export default function EmployeesTab() {
     setLoading(false);
   }
 
-  function generateCardCanvas(qrCanvas: HTMLCanvasElement, employee: any): HTMLCanvasElement {
-    const canvas = document.createElement("canvas");
-    canvas.width = 600;
-    canvas.height = 800;
-    const ctx = canvas.getContext("2d")!;
-    
-    // Background
-    ctx.fillStyle = "#F4F9FF";
-    ctx.fillRect(0, 0, 600, 800);
-    
-    // Card Shadow
-    ctx.shadowColor = "rgba(0, 0, 0, 0.08)";
-    ctx.shadowBlur = 30;
-    ctx.shadowOffsetY = 10;
-    
-    // Card Body
-    ctx.fillStyle = "#FFFFFF";
-    // Rounded rect
-    const x = 40, y = 40, w = 520, h = 720, r = 32;
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Reset shadow for text/images
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-    
-    ctx.textAlign = "center";
-    
-    // Header
-    ctx.fillStyle = "#3B82F6";
-    ctx.font = "bold 20px sans-serif";
-    ctx.letterSpacing = "2px";
-    ctx.fillText("ATTENDANCE PASS", 300, 120);
-    
-    // Name
-    ctx.fillStyle = "#1E293B";
-    ctx.font = "bold 46px sans-serif";
-    ctx.fillText(employee.name, 300, 190);
-    
-    // Department & ID
-    ctx.fillStyle = "#64748B";
-    ctx.font = "24px sans-serif";
-    ctx.fillText(`${employee.department} - ${employee.empId}`, 300, 240);
-    
-    // Draw QR
-    // QR size is 320x320
-    const qrSize = 340;
-    ctx.drawImage(qrCanvas, 300 - qrSize/2, 290, qrSize, qrSize);
-    
-    // Footer
-    ctx.fillStyle = "#94A3B8";
-    ctx.font = "18px sans-serif";
-    ctx.fillText("Scan this code at the entrance to mark attendance", 300, 700);
-    
-    // Logo text at very bottom
-    ctx.fillStyle = "#CBD5E1";
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillText("Attendance Manager", 300, 740);
+  const generateNewId = (cat: string) => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 4; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const prefix = cat === 'Staff' ? 'EMP' : cat === 'Visitor' ? 'VIS' : 'VEH';
+    setEmpId(`${prefix}-${result}`);
+  };
 
-    return canvas;
-  }
-
-  function handleOpenForm() {
-    const newId = "EMP-" + Math.random().toString(36).substring(2, 6).toUpperCase();
-    setEmpId(newId);
+  const handleOpenForm = () => {
+    setCategory("Staff");
+    generateNewId("Staff");
+    setName("");
+    setDepartment("");
+    setPhone("");
+    setVehiclePlate("");
+    setDocumentFile(null);
     setShowForm(true);
-  }
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const cat = e.target.value;
+    setCategory(cat);
+    generateNewId(cat);
+    if (cat === 'Vehicle') {
+      setDepartment("Logistics"); // Default for vehicles
+    }
+  };
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!empId || !name) return;
     
-    const newEmp = {
-      empId, name, department, phone, createdAt: new Date().toISOString()
+    setIsUploading(true);
+    let document_url = "";
+    
+    if (documentFile) {
+      if (!navigator.onLine) {
+        alert("You must be online to upload ID documents.");
+        setIsUploading(false);
+        return;
+      }
+      const fileName = `${empId}_${Date.now()}_${documentFile.name}`;
+      const { data, error } = await supabase.storage.from('documents').upload(fileName, documentFile);
+      if (error) {
+        alert("Failed to upload document: " + error.message);
+        setIsUploading(false);
+        return;
+      }
+      const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(fileName);
+      document_url = publicUrl;
+    }
+    
+    const newEmp: Employee = {
+      empId, 
+      name, 
+      department, 
+      phone, 
+      category,
+      document_url: document_url || undefined,
+      vehicle_plate: category === 'Vehicle' ? vehiclePlate : undefined,
+      createdAt: new Date().toISOString()
     };
     
     if (navigator.onLine) {
@@ -157,181 +140,396 @@ export default function EmployeesTab() {
         const { error } = await supabase.from('employees').insert([newEmp]);
         if (error) throw error;
       } catch (err: any) {
-        alert("Error adding employee: " + err.message);
+        alert("Error adding profile: " + err.message);
+        setIsUploading(false);
         return;
       }
     } else {
-      // Save locally if offline
       await localdb.employeeQueue.put(newEmp);
-      // Also update the cached list so they show up immediately
       const cached = localStorage.getItem('cached_employees');
       const currentList = cached ? JSON.parse(cached) : [];
       currentList.unshift(newEmp);
       localStorage.setItem('cached_employees', JSON.stringify(currentList));
     }
     
+    setIsUploading(false);
     setShowForm(false);
-    setEmpId(""); setName(""); setDepartment(""); setPhone("");
     fetchEmployees();
   }
 
-  async function handleDelete(id: string) {
-    if(confirm("Delete this employee?")) {
-      await supabase.from('employees').delete().eq('empId', id);
-      fetchEmployees();
+  // Draw a beautiful ID card
+  const generateCardCanvas = (qrCanvas: HTMLCanvasElement, emp: Employee): HTMLCanvasElement => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 800;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return qrCanvas;
+
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(1, '#f0f7ff');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Header Banner
+    ctx.fillStyle = emp.category === 'Vehicle' ? '#f59e0b' : emp.category === 'Visitor' ? '#10b981' : '#2563eb';
+    ctx.fillRect(0, 0, canvas.width, 140);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 44px sans-serif';
+    ctx.textAlign = 'center';
+    const bannerTitle = emp.category === 'Vehicle' ? 'VEHICLE PASS' : emp.category === 'Visitor' ? 'VISITOR PASS' : 'STAFF ID CARD';
+    ctx.fillText(bannerTitle, canvas.width / 2, 85);
+
+    // Card Body
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.1)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 10;
+    ctx.roundRect(40, 180, 520, 580, 30);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    // QR Code
+    ctx.drawImage(qrCanvas, (canvas.width - 250) / 2, 220, 250, 250);
+
+    // Profile Details
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 38px sans-serif';
+    ctx.fillText(emp.name.toUpperCase(), canvas.width / 2, 530);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '24px sans-serif';
+    ctx.fillText(emp.department.toUpperCase(), canvas.width / 2, 570);
+
+    // Divider
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(100, 610);
+    ctx.lineTo(500, 610);
+    ctx.stroke();
+
+    // Footer Info
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 28px monospace';
+    ctx.fillText(`ID: ${emp.empId}`, canvas.width / 2, 660);
+    
+    if (emp.category === 'Vehicle' && emp.vehicle_plate) {
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 24px monospace';
+      ctx.fillText(`PLATE: ${emp.vehicle_plate}`, canvas.width / 2, 700);
+    } else if (emp.phone) {
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 24px monospace';
+      ctx.fillText(`PH: ${emp.phone}`, canvas.width / 2, 700);
     }
-  }
+
+    return canvas;
+  };
+
+  const getCategoryIcon = (cat?: string) => {
+    if (cat === 'Vehicle') return <Truck size={16} className="text-amber-500" />;
+    if (cat === 'Visitor') return <UserPlus size={16} className="text-emerald-500" />;
+    return <Shield size={16} className="text-blue-500" />;
+  };
 
   return (
-    <div className="pb-20">
-      {showForm ? (
-        <div className="p-4 bg-white rounded-xl shadow-md border m-4">
-          <h2 className="text-xl font-bold mb-4">Register Employee</h2>
+    <div className="p-4 pb-20 max-w-md mx-auto space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-2xl font-bold text-gray-800">Registry</h2>
+        <button 
+          onClick={handleOpenForm}
+          className="bg-blue-900 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center shadow-md active:scale-95 transition-transform"
+        >
+          + Add New
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white p-5 rounded-2xl shadow-lg border border-gray-100 mb-6 animate-fade-in relative">
+          <button onClick={() => setShowForm(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
+            <X size={20} />
+          </button>
+          
+          <h3 className="text-lg font-bold mb-4 text-gray-800">Register Profile</h3>
           <form onSubmit={handleAdd} className="space-y-4">
+            
             <div>
-              <label className="block text-sm text-gray-500 mb-1">Employee ID *</label>
-              <input required value={empId} readOnly className="w-full border rounded p-2 bg-gray-50 text-gray-500 font-mono" />
+              <label className="block text-xs font-bold text-gray-500 mb-1">Category</label>
+              <select 
+                value={category}
+                onChange={handleCategoryChange}
+                className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              >
+                <option value="Staff">Staff</option>
+                <option value="Visitor">Visitor / Volunteer</option>
+                <option value="Vehicle">Rescue Vehicle</option>
+              </select>
             </div>
-            <div>
-              <label className="block text-sm text-gray-500 mb-1">Full Name *</label>
-              <input required value={name} onChange={e=>setName(e.target.value)} className="w-full border rounded p-2" />
+
+            <div className="flex space-x-3">
+              <div className="w-1/2">
+                <label className="block text-xs font-bold text-gray-500 mb-1">ID *</label>
+                <input 
+                  type="text" 
+                  value={empId} 
+                  onChange={e => setEmpId(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  required
+                />
+              </div>
+              <div className="w-1/2">
+                <label className="block text-xs font-bold text-gray-500 mb-1">
+                  {category === 'Vehicle' ? 'Vehicle Name *' : 'Full Name *'}
+                </label>
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={e => setName(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm text-gray-500 mb-1">Department</label>
-              <input value={department} onChange={e=>setDepartment(e.target.value)} className="w-full border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-500 mb-1">WhatsApp Phone (Optional)</label>
-              <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+1234567890" className="w-full border rounded p-2" />
-            </div>
-            <div className="flex justify-end space-x-2 pt-2">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-500">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded shadow">Save</button>
+
+            {category === 'Vehicle' ? (
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">License Plate Number</label>
+                <input 
+                  type="text" 
+                  value={vehiclePlate} 
+                  onChange={e => setVehiclePlate(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase"
+                  placeholder="e.g. MH-12-AB-1234"
+                />
+              </div>
+            ) : (
+              <div className="flex space-x-3">
+                <div className="w-1/2">
+                  <label className="block text-xs font-bold text-gray-500 mb-1">
+                    {category === 'Visitor' ? 'Purpose/Org' : 'Department'}
+                  </label>
+                  <input 
+                    type="text" 
+                    value={department} 
+                    onChange={e => setDepartment(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="w-1/2">
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    value={phone} 
+                    onChange={e => setPhone(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {category === 'Visitor' && (
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">ID Document (Aadhaar/Photo)</label>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  capture="environment"
+                  onChange={e => e.target.files && setDocumentFile(e.target.files[0])}
+                  className="w-full bg-gray-50 border border-gray-200 p-2 rounded-xl text-sm"
+                />
+              </div>
+            )}
+
+            <div className="flex space-x-3 pt-2">
+              <button 
+                type="button" 
+                onClick={() => setShowForm(false)}
+                className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={isUploading}
+                className="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold shadow-md disabled:opacity-50"
+              >
+                {isUploading ? "Uploading..." : "Save Profile"}
+              </button>
             </div>
           </form>
         </div>
-      ) : (
-        <>
-          <div className="p-4 flex justify-between items-center">
-            <h2 className="text-lg font-bold text-gray-700">Staff List</h2>
-            <button onClick={handleOpenForm} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm shadow">
-              + Add Employee
-            </button>
-          </div>
-          
-          <div className="px-4 space-y-3">
-            {loading ? (
-               <p className="text-center text-gray-500 py-10">Loading...</p>
-            ) : employees.length === 0 ? (
-              <p className="text-center text-gray-500 py-10">No employees found. Add one to generate a QR code.</p>
-            ) : (
-              employees.map(emp => (
-                <div key={emp.empId} className="bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center">
-                  <div>
-                    <h3 className="font-bold text-gray-800">{emp.name}</h3>
-                    <p className="text-sm text-gray-500">{emp.empId} - {emp.department}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button onClick={() => setSelectedEmployee(emp)} className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded text-sm font-medium">
-                      Show QR
-                    </button>
-                    <button onClick={() => handleDelete(emp.empId)} className="text-red-400 p-1.5 hover:bg-red-50 rounded-full transition-colors">
-                      <X size={18} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </>
       )}
 
+      {loading ? (
+        <div className="text-center py-10 text-gray-400">Loading registry...</div>
+      ) : employees.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
+          No profiles registered yet.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {employees.map(emp => (
+            <div 
+              key={emp.empId} 
+              onClick={() => setSelectedEmployee(emp)}
+              className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-blue-300 transition-colors"
+            >
+              <div className="flex items-center space-x-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg
+                  ${emp.category === 'Vehicle' ? 'bg-amber-100 text-amber-700' : 
+                    emp.category === 'Visitor' ? 'bg-emerald-100 text-emerald-700' : 
+                    'bg-blue-100 text-blue-700'}`}>
+                  {emp.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-bold text-gray-800">{emp.name}</h3>
+                    <span className="flex items-center text-[10px] uppercase tracking-wider font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md">
+                      {getCategoryIcon(emp.category)} <span className="ml-1">{emp.category || 'Staff'}</span>
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-0.5 font-mono text-xs">{emp.empId} • {emp.category === 'Vehicle' ? emp.vehicle_plate : emp.department}</p>
+                </div>
+              </div>
+              
+              {emp.document_url && (
+                <div className="text-emerald-500 bg-emerald-50 p-2 rounded-full" title="Document Attached">
+                  <FileText size={18} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* QR Code Modal */}
       {selectedEmployee && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl w-full max-w-xs flex flex-col items-center relative shadow-xl">
-            <button onClick={() => setSelectedEmployee(null)} className="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+            <button 
+              onClick={() => setSelectedEmployee(null)}
+              className="absolute top-4 right-4 p-2 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 z-10"
+            >
               <X size={20} />
             </button>
             
-            <h3 className="font-bold text-blue-600 mb-1 tracking-widest text-sm">ATTENDANCE PASS</h3>
-            <p className="text-gray-800 font-bold text-lg mb-4">{selectedEmployee.name}</p>
-            
-            <div className="p-2 bg-white border-2 border-gray-100 rounded-xl mb-4">
-              <QRCodeCanvas 
-                id="qr-canvas" 
-                value={JSON.stringify({ empId: selectedEmployee.empId, name: selectedEmployee.name })} 
-                size={200} 
-              />
+            <div className="p-8 pb-6 flex flex-col items-center">
+              <div className={`w-full text-center py-2 mb-6 rounded-lg font-bold text-sm tracking-widest
+                ${selectedEmployee.category === 'Vehicle' ? 'bg-amber-100 text-amber-700' : 
+                  selectedEmployee.category === 'Visitor' ? 'bg-emerald-100 text-emerald-700' : 
+                  'bg-blue-100 text-blue-700'}`}>
+                {selectedEmployee.category === 'Vehicle' ? 'VEHICLE PASS' : selectedEmployee.category === 'Visitor' ? 'VISITOR PASS' : 'STAFF PASS'}
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl shadow-inner border border-gray-100 mb-6 relative">
+                {/* Hidden canvas used to generate the final image */}
+                <div className="hidden">
+                  <QRCodeCanvas 
+                    id="qr-canvas"
+                    value={JSON.stringify({ empId: selectedEmployee.empId })} 
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+                {/* Visible QR Code for display */}
+                <QRCodeCanvas 
+                  value={JSON.stringify({ empId: selectedEmployee.empId })} 
+                  size={180}
+                  level="H"
+                />
+              </div>
+
+              <h2 className="text-2xl font-bold text-gray-800 text-center">{selectedEmployee.name}</h2>
+              <p className="text-gray-500 font-mono mt-1">{selectedEmployee.empId}</p>
+              
+              {selectedEmployee.document_url && (
+                <a 
+                  href={selectedEmployee.document_url} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="mt-4 text-sm text-blue-600 font-medium flex items-center bg-blue-50 px-4 py-2 rounded-lg"
+                >
+                  <FileText size={16} className="mr-2" /> View Attached Document
+                </a>
+              )}
             </div>
-            
-            <button 
-              onClick={() => {
-                const qrCanvas = document.getElementById("qr-canvas") as HTMLCanvasElement;
-                if (!qrCanvas) return;
-                
-                const cardCanvas = generateCardCanvas(qrCanvas, selectedEmployee);
-                
-                cardCanvas.toBlob(async (blob) => {
-                  if (!blob) return;
-                  const file = new File([blob], `${selectedEmployee.name.replace(/\s+/g, '_')}_Pass.png`, { type: "image/png" });
-                  
-                  const useDirectWhatsApp = selectedEmployee.phone && selectedEmployee.phone.length > 5;
-                  
-                  if (useDirectWhatsApp) {
-                    if (!navigator.onLine) {
-                      alert("You must be online to generate and upload the cloud link for this pass.");
-                      return;
-                    }
-                    
-                    try {
-                      // Show uploading state (simple alert for now)
-                      const fileName = `${selectedEmployee.empId}_${Date.now()}.png`;
-                      
-                      const { data, error } = await supabase
-                        .storage
-                        .from('qr-passes')
-                        .upload(fileName, file, {
-                          cacheControl: '3600',
-                          upsert: false
-                        });
 
-                      if (error) {
-                        console.error("Upload error", error);
-                        alert("Failed to upload image. Did you create the 'qr-passes' public bucket in Supabase?");
-                        return;
+            <div className="bg-gray-50 p-4 border-t border-gray-100 px-6">
+              <div className="w-full flex space-x-2">
+                <button 
+                  onClick={() => {
+                    const qrCanvas = document.getElementById("qr-canvas") as HTMLCanvasElement;
+                    if (!qrCanvas) return;
+                    const cardCanvas = generateCardCanvas(qrCanvas, selectedEmployee);
+                    const url = cardCanvas.toDataURL("image/png");
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${selectedEmployee.name.replace(/\s+/g, '_')}_Pass.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                  className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-3 rounded-xl flex items-center justify-center font-bold shadow-sm transition-colors text-sm"
+                >
+                  <Download size={18} className="mr-1" /> Download
+                </button>
+                <button 
+                  onClick={async () => {
+                    const qrCanvas = document.getElementById("qr-canvas") as HTMLCanvasElement;
+                    if (!qrCanvas) return;
+                    const cardCanvas = generateCardCanvas(qrCanvas, selectedEmployee);
+                    
+                    cardCanvas.toBlob(async (blob) => {
+                      if (!blob) return;
+                      const file = new File([blob], `${selectedEmployee.name.replace(/\s+/g, '_')}_Pass.png`, { type: "image/png" });
+                      
+                      const useDirectWhatsApp = selectedEmployee.phone && selectedEmployee.phone.length > 5;
+                      
+                      if (useDirectWhatsApp) {
+                        if (!navigator.onLine) {
+                          alert("You must be online to generate and upload the cloud link for this pass.");
+                          return;
+                        }
+                        try {
+                          const fileName = `${selectedEmployee.empId}_${Date.now()}.png`;
+                          const { error } = await supabase.storage.from('qr-passes').upload(fileName, file, { cacheControl: '3600', upsert: false });
+                          if (error) {
+                            alert("Failed to upload image. Did you create the 'qr-passes' public bucket?");
+                            return;
+                          }
+                          const passPageUrl = `${window.location.origin}/pass/${fileName}`;
+                          const cleanPhone = (selectedEmployee.phone || '').replace(/\D/g,'');
+                          const msg = `Hello ${selectedEmployee.name},\n\nOpen the link to view your QR pass and download it:\n${passPageUrl}`;
+                          const waUrl = `https://wa.me/${cleanPhone}?text=` + encodeURIComponent(msg);
+                          window.open(waUrl, "_blank");
+                        } catch (err) {
+                          alert("An error occurred while uploading the pass.");
+                        }
+                      } else if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                          await navigator.share({
+                            title: 'Attendance QR',
+                            text: `Here is the Attendance QR Pass for ${selectedEmployee.name}.`,
+                            files: [file]
+                          });
+                        } catch (err: any) {
+                          console.log("Share cancelled or failed", err);
+                        }
+                      } else {
+                        alert("Please add a phone number for this profile to share via WhatsApp.");
                       }
-
-                      const passPageUrl = `${window.location.origin}/pass/${fileName}`;
-                      
-                      const cleanPhone = (selectedEmployee.phone || '').replace(/\D/g,'');
-                      const msg = `Hello ${selectedEmployee.name},\n\nOpen the link to view your QR pass and download it:\n${passPageUrl}`;
-                      const waUrl = `https://wa.me/${cleanPhone}?text=` + encodeURIComponent(msg);
-                      
-                      window.open(waUrl, "_blank");
-                      
-                    } catch (err) {
-                      alert("An error occurred while uploading the pass.");
-                    }
-                    
-                  } else if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                      await navigator.share({
-                        title: 'Attendance QR',
-                        text: `Here is the Attendance QR Pass for ${selectedEmployee.name}.`,
-                        files: [file]
-                      });
-                    } catch (err: any) {
-                      console.log("Share cancelled or failed", err);
-                    }
-                  } else {
-                    alert("Please add a phone number for this employee to share via WhatsApp.");
-                  }
-                }, "image/png");
-              }}
-              className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white py-3 rounded-xl flex items-center justify-center font-bold shadow-md transition-colors text-sm"
-            >
-              <MessageCircle size={18} className="mr-2" /> Share to WhatsApp
-            </button>
+                    }, "image/png");
+                  }}
+                  className="flex-1 bg-[#25D366] hover:bg-[#1DA851] text-white py-3 rounded-xl flex items-center justify-center font-bold shadow-md transition-colors text-sm"
+                >
+                  <MessageCircle size={18} className="mr-1" /> WhatsApp
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

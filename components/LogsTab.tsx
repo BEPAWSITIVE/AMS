@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase, AttendanceRecord } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
-import { User, LogIn, LogOut, CheckCircle2, CloudOff, ClipboardList } from "lucide-react";
+import { Clock, CheckCircle2, UserPlus, Truck, Shield } from "lucide-react";
 
 export default function LogsTab() {
   const [logs, setLogs] = useState<AttendanceRecord[]>([]);
@@ -22,7 +22,6 @@ export default function LogsTab() {
       )
       .subscribe();
 
-    // Fallback polling every 30 seconds just in case realtime isn't enabled in dashboard
     const interval = setInterval(() => {
       if (navigator.onLine) fetchLogs();
     }, 30000);
@@ -47,15 +46,12 @@ export default function LogsTab() {
       if (cached) allLogs = JSON.parse(cached);
     }
 
-    // Add local pending records
     const queue = await localdb.syncQueue.toArray();
     
-    // Merge without duplicates (using recordId), prioritizing queue over cached
     const merged = [...queue, ...allLogs].reduce((acc, curr) => {
       if (!acc.find(item => item.recordId === curr.recordId)) {
         acc.push(curr);
       } else {
-        // If it exists, update it if the queue version is newer (queue version is always newer)
         const idx = acc.findIndex(item => item.recordId === curr.recordId);
         if (queue.find(q => q.recordId === curr.recordId)) {
           acc[idx] = curr;
@@ -69,68 +65,101 @@ export default function LogsTab() {
     setLoading(false);
   }
 
-  return (
-    <div className="pb-20">
-      <div className="p-4 bg-white shadow-sm border-b sticky top-0 z-10 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">Recent Scans</h2>
-        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-medium">Today</span>
-      </div>
+  const getCategoryIcon = (cat?: string) => {
+    if (cat === 'Vehicle') return <Truck size={16} className="text-amber-500" />;
+    if (cat === 'Visitor') return <UserPlus size={16} className="text-emerald-500" />;
+    return <Shield size={16} className="text-blue-500" />;
+  };
 
-      <div className="px-4 pt-4 space-y-4">
-        {loading ? (
-           <p className="text-center text-gray-500 py-10">Loading...</p>
-        ) : logs.length === 0 ? (
-          <div className="text-center py-10 text-gray-400">
-            <ClipboardList className="mx-auto mb-2 opacity-50" size={40} />
-            <p>No attendance logs yet.</p>
-          </div>
-        ) : (
-          logs.map(log => (
-            <div key={log.recordId} className="bg-white p-4 rounded-xl border shadow-sm relative">
-              <div className="absolute top-4 right-4">
-                {log.isSynced ? (
-                  <CheckCircle2 size={16} className="text-green-500" />
+  return (
+    <div className="p-4 pb-20 max-w-md mx-auto space-y-4">
+      <h2 className="text-2xl font-bold text-gray-800 mb-2">Activity Logs</h2>
+
+      {loading ? (
+        <div className="text-center py-10 text-gray-400">Loading logs...</div>
+      ) : logs.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
+          No activity logs found.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {logs.map(log => (
+            <div key={log.recordId} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+              {/* Sync Indicator */}
+              <div className="absolute top-0 right-0">
+                {log.isSynced === 1 ? (
+                  <div className="bg-green-100 text-green-600 p-1.5 rounded-bl-xl" title="Synced to Cloud">
+                    <CheckCircle2 size={12} />
+                  </div>
                 ) : (
-                  <CloudOff size={16} className="text-orange-400" />
+                  <div className="bg-orange-100 text-orange-600 p-1.5 rounded-bl-xl" title="Pending Sync">
+                    <Clock size={12} />
+                  </div>
                 )}
               </div>
-              
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                  <User size={20} />
-                </div>
+
+              <div className="flex items-start justify-between mt-1 mb-2">
                 <div>
-                  <h3 className="font-bold text-gray-800">{log.empName}</h3>
-                  <p className="text-xs text-gray-500">{log.department} - {log.empId}</p>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-bold text-gray-800">{log.empName}</h3>
+                    <span className="flex items-center text-[10px] uppercase tracking-wider font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md">
+                      {getCategoryIcon(log.category)} <span className="ml-1">{log.category || 'Staff'}</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-mono">{log.empId} • {log.date}</p>
                 </div>
+                
+                {log.category !== 'Vehicle' && (
+                  <div className={`px-2 py-1 rounded-md text-xs font-bold ${log.status === 'IN' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {log.status === 'IN' ? 'Active' : 'Completed'}
+                  </div>
+                )}
+                {log.category === 'Vehicle' && (
+                  <div className={`px-2 py-1 rounded-md text-xs font-bold ${log.status === 'IN' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {log.status === 'IN' ? 'Dispatched' : 'Returned'}
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                <div className="flex items-center space-x-2">
-                  <LogIn size={16} className="text-green-600" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Time In</p>
-                    <p className="text-sm font-semibold text-gray-700">{log.inTime}</p>
+              {log.category === 'Vehicle' ? (
+                <div className="bg-amber-50/50 rounded-xl p-3 text-sm mt-1 border border-amber-100">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-gray-500 font-bold text-xs">Driver:</span>
+                    <span className="font-bold text-gray-800">{log.driver_name}</span>
                   </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <LogOut size={16} className="text-red-500" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Time Out</p>
-                    <p className="text-sm font-semibold text-gray-700">{log.outTime || '--:--'}</p>
+                  <div className="flex justify-between items-center">
+                    <div className="text-center">
+                      <span className="block text-[10px] text-gray-400 uppercase font-bold tracking-widest">Out ({log.inTime})</span>
+                      <span className="font-mono font-bold text-gray-800">{log.meter_out}</span>
+                    </div>
+                    <div className="h-px bg-gray-300 w-8 mx-2"></div>
+                    <div className="text-center">
+                      <span className="block text-[10px] text-gray-400 uppercase font-bold tracking-widest">In ({log.outTime || '--'})</span>
+                      <span className="font-mono font-bold text-gray-800">{log.meter_in || '--'}</span>
+                    </div>
                   </div>
+                  {log.totalHours && (
+                    <div className="mt-2 pt-2 border-t border-amber-200/50 text-center font-bold text-amber-800 text-xs">
+                      {log.totalHours}
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              {log.totalHours && (
-                <div className="mt-3 text-center text-xs font-medium text-blue-600 bg-blue-50 py-1.5 rounded-md">
-                  Total Session: {log.totalHours}
+              ) : (
+                <div className="flex items-center space-x-2 mt-1">
+                  <div className="flex-1 bg-green-50 p-2 rounded-xl text-center border border-green-100">
+                    <span className="block text-[10px] text-green-600 uppercase font-bold tracking-widest">Check In</span>
+                    <span className="font-bold text-gray-800">{log.inTime}</span>
+                  </div>
+                  <div className="flex-1 bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
+                    <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-widest">Check Out</span>
+                    <span className="font-bold text-gray-800">{log.outTime || "--:--"}</span>
+                  </div>
                 </div>
               )}
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
