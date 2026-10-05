@@ -61,12 +61,13 @@ export default function EmployeesTab() {
     }
     
     const queuedEmps = await localdb.employeeQueue.toArray();
-    const merged = [...queuedEmps, ...allEmps].reduce((acc, curr) => {
-      if (!acc.find((item: Employee) => item.empId === curr.empId)) acc.push(curr);
+    const merged = [...queuedEmps, ...allEmps].reduce((acc: Employee[], curr: any) => {
+      const current = curr as Employee;
+      if (!acc.find((item: Employee) => item.empId === current.empId)) acc.push(current);
       return acc;
     }, [] as Employee[]);
     
-    merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    merged.sort((a: Employee, b: Employee) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     setEmployees(merged);
     setLoading(false);
   }

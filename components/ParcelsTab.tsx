@@ -56,17 +56,18 @@ export default function ParcelsTab() {
     }
     
     const queuedParcels = await localdb.parcelQueue.toArray();
-    const merged = [...queuedParcels, ...allParcels].reduce((acc, curr) => {
-      const idx = acc.findIndex((item: Parcel) => item.id === curr.id);
+    const merged = [...queuedParcels, ...allParcels].reduce((acc: Parcel[], curr: any) => {
+      const current = curr as Parcel;
+      const idx = acc.findIndex((item: Parcel) => item.id === current.id);
       if (idx === -1) {
-        acc.push(curr);
-      } else if (queuedParcels.find((q: Parcel) => q.id === curr.id)) {
-        acc[idx] = curr;
+        acc.push(current);
+      } else if (queuedParcels.find((q: any) => (q as Parcel).id === current.id)) {
+        acc[idx] = current;
       }
       return acc;
     }, [] as Parcel[]);
     
-    merged.sort((a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime());
+    merged.sort((a: Parcel, b: Parcel) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime());
     setParcels(merged);
     setLoading(false);
   }
