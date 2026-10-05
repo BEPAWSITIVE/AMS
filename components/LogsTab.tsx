@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase, AttendanceRecord } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
-import { Clock, CheckCircle2, UserPlus, Truck, Shield } from "lucide-react";
+import { Clock, CheckCircle2, UserPlus, Truck, Shield, Package } from "lucide-react";
 
 export default function LogsTab() {
   const [logs, setLogs] = useState<AttendanceRecord[]>([]);
@@ -67,6 +67,7 @@ export default function LogsTab() {
 
   const getCategoryIcon = (cat?: string) => {
     if (cat === 'Vehicle') return <Truck size={16} className="text-amber-500" />;
+    if (cat === 'Parcel') return <Package size={16} className="text-purple-500" />;
     if (cat === 'Visitor') return <UserPlus size={16} className="text-emerald-500" />;
     return <Shield size={16} className="text-blue-500" />;
   };
@@ -109,9 +110,14 @@ export default function LogsTab() {
                   <p className="text-xs text-gray-400 font-mono">{log.empId} • {log.date}</p>
                 </div>
                 
-                {log.category !== 'Vehicle' && (
+                {log.category !== 'Vehicle' && log.category !== 'Parcel' && (
                   <div className={`px-2 py-1 rounded-md text-xs font-bold ${log.status === 'IN' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                     {log.status === 'IN' ? 'Active' : 'Completed'}
+                  </div>
+                )}
+                {log.category === 'Parcel' && (
+                  <div className={`px-2 py-1 rounded-md text-xs font-bold ${log.status === 'IN' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {log.status === 'IN' ? 'At Gate' : 'Picked Up'}
                   </div>
                 )}
                 {log.category === 'Vehicle' && (
@@ -121,7 +127,18 @@ export default function LogsTab() {
                 )}
               </div>
 
-              {log.category === 'Vehicle' ? (
+              {log.category === 'Parcel' ? (
+                <div className="flex items-center space-x-2 mt-1">
+                  <div className="flex-1 bg-purple-50 p-2 rounded-xl text-center border border-purple-100">
+                    <span className="block text-[10px] text-purple-600 uppercase font-bold tracking-widest">Received</span>
+                    <span className="font-bold text-gray-800">{log.inTime}</span>
+                  </div>
+                  <div className="flex-1 bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
+                    <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-widest">{log.driver_name ? `Given to ${log.driver_name}` : 'Awaiting Pickup'}</span>
+                    <span className="font-bold text-gray-800">{log.outTime || "--:--"}</span>
+                  </div>
+                </div>
+              ) : log.category === 'Vehicle' ? (
                 <div className="bg-amber-50/50 rounded-xl p-3 text-sm mt-1 border border-amber-100">
                   <div className="flex justify-between mb-1">
                     <span className="text-gray-500 font-bold text-xs">Driver:</span>

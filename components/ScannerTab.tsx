@@ -3,10 +3,12 @@ import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { supabase, AttendanceRecord, Employee } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
-import { CheckCircle2, AlertCircle, X, Truck } from "lucide-react";
+import { CheckCircle2, AlertCircle, X, Truck, Package } from "lucide-react";
 
 export default function ScannerTab() {
   const [scanResult, setScanResult] = useState<{ success: boolean; msg: string; isVehicle?: boolean } | null>(null);
+  const [parcelModal, setParcelModal] = useState<{ profile: Employee; lastRecord: AttendanceRecord } | null>(null);
+  const [pickerName, setPickerName] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -15,6 +17,8 @@ export default function ScannerTab() {
     profile: Employee;
     lastRecord: AttendanceRecord | null;
   } | null>(null);
+  const [parcelModal, setParcelModal] = useState<{ profile: Employee; lastRecord: AttendanceRecord } | null>(null);
+  const [pickerName, setPickerName] = useState("");
   
   const [driverName, setDriverName] = useState("");
   const [meterReading, setMeterReading] = useState("");
@@ -113,6 +117,11 @@ export default function ScannerTab() {
       if (emp.category === 'Vehicle') {
         setVehicleModal({ profile: emp, lastRecord });
         return; 
+      }
+      
+      if (emp.category === 'Parcel' && lastRecord && lastRecord.status === 'IN') {
+        setParcelModal({ profile: emp, lastRecord });
+        return;
       }
 
       if (lastRecord && lastRecord.status === 'IN') {
@@ -240,6 +249,40 @@ export default function ScannerTab() {
     }, 3000);
   };
 
+    const handleParcelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!parcelModal) return;
+    
+    const { profile, lastRecord } = parcelModal;
+    const today = new Date();
+    const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const updatedRecord = {
+      ...lastRecord,
+      outTime: timeStr,
+      outTimestamp: today.getTime(),
+      driver_name: pickerName, // Overload driver_name to store picker name
+      status: 'OUT',
+      isSynced: navigator.onLine ? 1 : 0,
+      updatedAt: today.toISOString()
+    };
+
+    if (navigator.onLine) {
+      await supabase.from('attendance').update(updatedRecord).eq('recordId', lastRecord.recordId);
+    } else {
+      await localdb.syncQueue.put(updatedRecord);
+    }
+    
+    setScanResult({ success: true, msg: `Parcel picked up by ${pickerName}` + (navigator.onLine ? '' : ' (Offline)') });
+    setParcelModal(null);
+    setPickerName("");
+    
+    setTimeout(() => {
+      setScanResult(null);
+      if (scannerRef.current) scannerRef.current.resume();
+    }, 3000);
+  };
+
   const cancelVehicleScan = () => {
     setVehicleModal(null);
     setDriverName("");
@@ -317,6 +360,51 @@ export default function ScannerTab() {
               ? (scanResult.isVehicle ? <Truck size={24} /> : <CheckCircle2 size={24} />) 
               : <AlertCircle size={24} />}
             <span className="font-bold">{scanResult.msg}</span>
+          </div>
+        </div>
+      )}
+
+            {/* Parcel Action Modal */}
+      {parcelModal && (
+        <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative">
+            <div className="bg-purple-500 p-6 text-white text-center">
+              <Package size={40} className="mx-auto mb-2 opacity-90" />
+              <h3 className="text-xl font-bold">{parcelModal.profile.name}</h3>
+              <p className="opacity-80 text-sm font-mono mt-1">{parcelModal.profile.empId}</p>
+            </div>
+            
+            <form onSubmit={handleParcelSubmit} className="p-6 space-y-4">
+              <div className="bg-purple-50 text-purple-800 p-3 rounded-lg text-sm font-bold text-center mb-2">
+                Parcel Pickup Authorization
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">Name of Person Picking Up *</label>
+                <input 
+                  type="text" 
+                  value={pickerName}
+                  onChange={e => setPickerName(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => { setParcelModal(null); setPickerName(""); if (scannerRef.current) scannerRef.current.resume(); }}
+                  className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-xl font-bold shadow-md"
+                >
+                  Confirm Pickup
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

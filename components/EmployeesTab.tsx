@@ -77,7 +77,7 @@ export default function EmployeesTab() {
     for (let i = 0; i < 4; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    const prefix = cat === 'Staff' ? 'EMP' : cat === 'Visitor' ? 'VIS' : 'VEH';
+    const prefix = cat === 'Staff' ? 'EMP' : cat === 'Visitor' ? 'VIS' : cat === 'Parcel' ? 'PAR' : 'VEH';
     setEmpId(`${prefix}-${result}`);
   };
 
@@ -115,15 +115,18 @@ export default function EmployeesTab() {
         setIsUploading(false);
         return;
       }
-      const fileName = `${empId}_${Date.now()}_${documentFile.name}`;
-      const { data, error } = await supabase.storage.from('documents').upload(fileName, documentFile);
-      if (error) {
-        alert("Failed to upload document: " + error.message);
+      try {
+        const fileExt = documentFile.name.split('.').pop() || 'jpg';
+        const fileName = `${empId}_${Date.now()}.${fileExt}`.replace(/\s+/g, '_');
+        const { data, error } = await supabase.storage.from('documents').upload(fileName, documentFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(fileName);
+        document_url = publicUrl;
+      } catch (err: any) {
+        alert("Upload failed. Make sure 'documents' bucket exists and has public INSERT policy. Error: " + err.message);
         setIsUploading(false);
         return;
       }
-      const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(fileName);
-      document_url = publicUrl;
     }
     
     const filteredGroup = groupMembers.filter(m => m.trim() !== "");
@@ -177,13 +180,13 @@ export default function EmployeesTab() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Header Banner
-    ctx.fillStyle = emp.category === 'Vehicle' ? '#f59e0b' : emp.category === 'Visitor' ? '#10b981' : '#2563eb';
+    ctx.fillStyle = emp.category === 'Vehicle' ? '#f59e0b' : emp.category === 'Visitor' ? '#10b981' : emp.category === 'Parcel' ? '#8b5cf6' : '#2563eb';
     ctx.fillRect(0, 0, canvas.width, 140);
     
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 44px sans-serif';
     ctx.textAlign = 'center';
-    const bannerTitle = emp.category === 'Vehicle' ? 'VEHICLE PASS' : emp.category === 'Visitor' ? 'VISITOR PASS' : 'STAFF ID CARD';
+    const bannerTitle = emp.category === 'Vehicle' ? 'VEHICLE PASS' : emp.category === 'Visitor' ? 'VISITOR PASS' : emp.category === 'Parcel' ? 'PARCEL TRACKER' : 'STAFF ID CARD';
     ctx.fillText(bannerTitle, canvas.width / 2, 85);
 
     // Card Body
@@ -270,6 +273,7 @@ export default function EmployeesTab() {
                 <option value="Staff">Staff</option>
                 <option value="Visitor">Visitor / Volunteer</option>
                 <option value="Vehicle">Rescue Vehicle</option>
+                <option value="Parcel">Parcel / Delivery</option>
               </select>
             </div>
 
@@ -286,7 +290,7 @@ export default function EmployeesTab() {
               </div>
               <div className="w-1/2">
                 <label className="block text-xs font-bold text-gray-500 mb-1">
-                  {category === 'Vehicle' ? 'Vehicle Name *' : 'Full Name *'}
+                  {category === 'Vehicle' ? 'Vehicle Name *' : category === 'Parcel' ? 'Courier / Delivery Svc *' : 'Full Name *'}
                 </label>
                 <input 
                   type="text" 
@@ -313,7 +317,7 @@ export default function EmployeesTab() {
               <div className="flex space-x-3">
                 <div className="w-1/2">
                   <label className="block text-xs font-bold text-gray-500 mb-1">
-                    {category === 'Visitor' ? 'Purpose/Org' : 'Department'}
+                    {category === 'Visitor' ? 'Purpose/Org' : category === 'Parcel' ? 'Tracking # / Desc' : 'Department'}
                   </label>
                   <input 
                     type="text" 
@@ -429,6 +433,7 @@ export default function EmployeesTab() {
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg
                   ${emp.category === 'Vehicle' ? 'bg-amber-100 text-amber-700' : 
                     emp.category === 'Visitor' ? 'bg-emerald-100 text-emerald-700' : 
+                    emp.category === 'Parcel' ? 'bg-purple-100 text-purple-700' : 
                     'bg-blue-100 text-blue-700'}`}>
                   {emp.name.charAt(0).toUpperCase()}
                 </div>
@@ -468,8 +473,9 @@ export default function EmployeesTab() {
               <div className={`w-full text-center py-2 mb-6 rounded-lg font-bold text-sm tracking-widest
                 ${selectedEmployee.category === 'Vehicle' ? 'bg-amber-100 text-amber-700' : 
                   selectedEmployee.category === 'Visitor' ? 'bg-emerald-100 text-emerald-700' : 
+                  selectedEmployee.category === 'Parcel' ? 'bg-purple-100 text-purple-700' : 
                   'bg-blue-100 text-blue-700'}`}>
-                {selectedEmployee.category === 'Vehicle' ? 'VEHICLE PASS' : selectedEmployee.category === 'Visitor' ? 'VISITOR PASS' : 'STAFF PASS'}
+                {selectedEmployee.category === 'Vehicle' ? 'VEHICLE PASS' : selectedEmployee.category === 'Visitor' ? 'VISITOR PASS' : selectedEmployee.category === 'Parcel' ? 'PARCEL TRACKER' : 'STAFF PASS'}
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-inner border border-gray-100 mb-6 relative">
