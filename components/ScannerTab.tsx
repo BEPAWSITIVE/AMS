@@ -249,14 +249,11 @@ export default function ScannerTab() {
   };
 
   return (
-    <div className="relative h-screen bg-black overflow-hidden">
+    <div className="relative min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden pb-16">
       
       {/* Scanner Viewport */}
-      <div className="absolute inset-0 z-0 flex items-center justify-center">
-        <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
-        
-        {/* Safe Area Overlay for aesthetic */}
-        <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none"></div>
+      <div className="w-full max-w-md mx-auto aspect-[3/4] flex items-center justify-center relative bg-gray-900 rounded-3xl overflow-hidden shadow-2xl">
+        <div id="reader" className="w-full h-full flex items-center justify-center [&>video]:object-cover"></div>
       </div>
 
       {/* Result Toast */}
