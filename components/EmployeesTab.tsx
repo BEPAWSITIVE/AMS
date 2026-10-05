@@ -62,7 +62,7 @@ export default function EmployeesTab() {
     
     const queuedEmps = await localdb.employeeQueue.toArray();
     const merged = [...queuedEmps, ...allEmps].reduce((acc, curr) => {
-      if (!acc.find(item => item.empId === curr.empId)) acc.push(curr);
+      if (!acc.find((item: Employee) => item.empId === curr.empId)) acc.push(curr);
       return acc;
     }, [] as Employee[]);
     

@@ -57,10 +57,10 @@ export default function ParcelsTab() {
     
     const queuedParcels = await localdb.parcelQueue.toArray();
     const merged = [...queuedParcels, ...allParcels].reduce((acc, curr) => {
-      const idx = acc.findIndex(item => item.id === curr.id);
+      const idx = acc.findIndex((item: Parcel) => item.id === curr.id);
       if (idx === -1) {
         acc.push(curr);
-      } else if (queuedParcels.find(q => q.id === curr.id)) {
+      } else if (queuedParcels.find((q: Parcel) => q.id === curr.id)) {
         acc[idx] = curr;
       }
       return acc;
