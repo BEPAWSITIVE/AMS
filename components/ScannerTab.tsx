@@ -34,7 +34,7 @@ export default function ScannerTab() {
   const [scanResult, setScanResult] = useState<{ success: boolean; msg: string; isVehicle?: boolean } | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [manualModalOpen, setManualModalOpen] = useState(false);
-  const [searchPhone, setSearchPhone] = useState("+91 ");
+  const [searchPhone, setSearchPhone] = useState("");
   const [searchResults, setSearchResults] = useState<Employee[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -286,8 +286,8 @@ export default function ScannerTab() {
   };
 
     useEffect(() => {
-    const cleanPhone = searchPhone.trim().replace('+91 ', '');
-    if (cleanPhone.length < 2) {
+    const query = searchPhone.trim();
+    if (query.length < 2) {
       setSearchResults([]);
       return;
     }
@@ -296,13 +296,17 @@ export default function ScannerTab() {
     const timer = setTimeout(async () => {
       let results: Employee[] = [];
       if (navigator.onLine) {
-        const { data } = await supabase.from('employees').select('*').ilike('phone', `%${cleanPhone}%`).limit(10);
+        const { data } = await supabase.from('employees').select('*').or(`phone.ilike.%${query}%,name.ilike.%${query}%`).limit(15);
         if (data) results = data;
       } else {
         const cached = localStorage.getItem('cached_employees');
         if (cached) {
           const emps: Employee[] = JSON.parse(cached);
-          results = emps.filter(e => e.phone && e.phone.includes(cleanPhone)).slice(0, 10);
+          const lowerQuery = query.toLowerCase();
+          results = emps.filter(e => 
+            (e.phone && e.phone.includes(query)) || 
+            (e.name && e.name.toLowerCase().includes(lowerQuery))
+          ).slice(0, 15);
         }
       }
       setSearchResults(results);
@@ -316,7 +320,7 @@ export default function ScannerTab() {
 
   const handleManualSelect = (empId: string) => {
     setManualModalOpen(false);
-    setSearchPhone("+91 ");
+    setSearchPhone("");
     setSearchResults([]);
     onScanSuccess(JSON.stringify({ empId }));
   };
@@ -416,7 +420,7 @@ export default function ScannerTab() {
           </div>
           <div className="text-left">
             <span className="block text-gray-800 font-bold text-sm">Forgot QR Code?</span>
-            <span className="block text-gray-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">Search by Phone Number</span>
+            <span className="block text-gray-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">Search Name or Phone</span>
           </div>
         </div>
         <div className="text-gray-400">
@@ -426,7 +430,7 @@ export default function ScannerTab() {
 
             {/* Manual Search Modal */}
       {manualModalOpen && (
-        <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-start pt-[10vh] justify-center p-4 animate-fade-in">
           <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative flex flex-col max-h-[80vh]">
             <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-center shrink-0">
               <h3 className="font-bold text-gray-800">Manual Entry</h3>
@@ -441,7 +445,7 @@ export default function ScannerTab() {
                   type="text" 
                   value={searchPhone}
                   onChange={e => setSearchPhone(e.target.value)}
-                  placeholder="+91 Phone Number"
+                  placeholder="Name or Phone Number"
                   className="flex-1 bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                   autoFocus
                 />
