@@ -95,7 +95,7 @@ export default function ScannerTab() {
       if (!empId) throw new Error("Invalid format");
 
       if (scannerRef.current) {
-        scannerRef.current.pause();
+        try { scannerRef.current.pause(); } catch(e) {}
       }
 
       const today = new Date();
@@ -129,7 +129,7 @@ export default function ScannerTab() {
         setScanResult({ success: false, msg: `Profile ${empId} not found.` });
         setTimeout(() => {
           setScanResult(null);
-          if (scannerRef.current) scannerRef.current.resume();
+          if (scannerRef.current) { try { scannerRef.current.resume(); } catch(e) {} }
         }, 3000);
         return;
       }
@@ -198,11 +198,16 @@ export default function ScannerTab() {
 
       setTimeout(() => {
         setScanResult(null);
-        if (scannerRef.current) scannerRef.current.resume();
+        if (scannerRef.current) {
+          try { scannerRef.current.resume(); } catch(e) {}
+        }
       }, 2500);
 
     } catch (err) {
-      if (scannerRef.current) scannerRef.current.resume();
+      console.error(err);
+      if (scannerRef.current) {
+        try { scannerRef.current.resume(); } catch(e) {}
+      }
     }
   };
 
@@ -274,37 +279,40 @@ export default function ScannerTab() {
     
     setTimeout(() => {
       setScanResult(null);
-      if (scannerRef.current) scannerRef.current.resume();
+      if (scannerRef.current) {
+        try { scannerRef.current.resume(); } catch(e) {}
+      }
     }, 3000);
   };
 
-    const handleManualSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSearching(true);
-    setSearchResults([]);
-    
+    useEffect(() => {
     const cleanPhone = searchPhone.trim().replace('+91 ', '');
-    if (!cleanPhone) {
-      setIsSearching(false);
+    if (cleanPhone.length < 2) {
+      setSearchResults([]);
       return;
     }
     
-    let results: Employee[] = [];
-    
-    if (navigator.onLine) {
-      const { data } = await supabase.from('employees').select('*').ilike('phone', `%${cleanPhone}%`);
-      if (data) results = data;
-    } else {
-      const cached = localStorage.getItem('cached_employees');
-      if (cached) {
-        const emps: Employee[] = JSON.parse(cached);
-        results = emps.filter(e => e.phone && e.phone.includes(cleanPhone));
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      let results: Employee[] = [];
+      if (navigator.onLine) {
+        const { data } = await supabase.from('employees').select('*').ilike('phone', `%${cleanPhone}%`).limit(10);
+        if (data) results = data;
+      } else {
+        const cached = localStorage.getItem('cached_employees');
+        if (cached) {
+          const emps: Employee[] = JSON.parse(cached);
+          results = emps.filter(e => e.phone && e.phone.includes(cleanPhone)).slice(0, 10);
+        }
       }
-    }
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 300);
     
-    setSearchResults(results);
-    setIsSearching(false);
-  };
+    return () => clearTimeout(timer);
+  }, [searchPhone, navigator.onLine]);
+
+  const handleManualSearch = (e: React.FormEvent) => { e.preventDefault(); };
 
   const handleManualSelect = (empId: string) => {
     setManualModalOpen(false);
@@ -318,7 +326,7 @@ export default function ScannerTab() {
     setDriverName("");
     setMeterReading("");
     setVisitedLocation("");
-    if (scannerRef.current) scannerRef.current.resume();
+    if (scannerRef.current) { try { scannerRef.current.resume(); } catch(e) {} }
   };
 
   const handleParcelSubmit = async (e: React.FormEvent) => {
@@ -352,7 +360,9 @@ export default function ScannerTab() {
     
     setTimeout(() => {
       setScanResult(null);
-      if (scannerRef.current) scannerRef.current.resume();
+      if (scannerRef.current) {
+        try { scannerRef.current.resume(); } catch(e) {}
+      }
     }, 3000);
   };
 
@@ -397,7 +407,7 @@ export default function ScannerTab() {
       </div>
 
       <button 
-        onClick={() => { setManualModalOpen(true); if (scannerRef.current) scannerRef.current.pause(); }}
+        onClick={() => { setManualModalOpen(true); if (scannerRef.current) { try { scannerRef.current.pause(); } catch(e) {} } }}
         className="w-full bg-white border border-gray-100 py-3.5 px-4 rounded-[20px] flex items-center justify-between shadow-sm z-10 hover:bg-gray-50 active:scale-95 transition-transform"
       >
         <div className="flex items-center">
@@ -420,7 +430,7 @@ export default function ScannerTab() {
           <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative flex flex-col max-h-[80vh]">
             <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-center shrink-0">
               <h3 className="font-bold text-gray-800">Manual Entry</h3>
-              <button onClick={() => { setManualModalOpen(false); setSearchResults([]); if (scannerRef.current) scannerRef.current.resume(); }} className="text-gray-400 hover:text-gray-800">
+              <button onClick={() => { setManualModalOpen(false); setSearchResults([]); if (scannerRef.current) { try { scannerRef.current.resume(); } catch(e) {} } }} className="text-gray-400 hover:text-gray-800">
                 <X size={20} />
               </button>
             </div>
@@ -605,7 +615,7 @@ export default function ScannerTab() {
               <div className="flex space-x-3 pt-2">
                 <button 
                   type="button" 
-                  onClick={() => { setParcelModal(null); setPickerName(""); if (scannerRef.current) scannerRef.current.resume(); }}
+                  onClick={() => { setParcelModal(null); setPickerName(""); if (scannerRef.current) { try { scannerRef.current.resume(); } catch(e) {} } }}
                   className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold"
                 >
                   Cancel
