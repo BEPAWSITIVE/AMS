@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { supabase, AttendanceRecord, Employee } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
-import { CheckCircle2, AlertCircle, X, Truck, Package, Search, ChevronRight } , Loader2, Sparkles } from "lucide-react";
+import { CheckCircle2, AlertCircle, X, Truck, Package, Search, ChevronRight, Loader2, Sparkles } from "lucide-react";
 
 const playSuccessSound = () => {
   try {
