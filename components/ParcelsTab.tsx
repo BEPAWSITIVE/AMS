@@ -46,7 +46,8 @@ export default function ParcelsTab({ role = "guard", initialAiData, onAiDataCons
   useEffect(() => {
     if (initialAiData) {
       setCompanyName(initialAiData.company_name || "");
-      setTargetPerson(initialAiData.recipient_name || "");
+      setBarcode(initialAiData.barcode || "");
+      setRecipientName(initialAiData.recipient_name || "");
       setShowForm(true);
       if (onAiDataConsumed) onAiDataConsumed();
     }
