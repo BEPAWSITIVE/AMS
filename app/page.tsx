@@ -22,8 +22,9 @@ export default function Home() {
 
   const fetchRole = async (userId: string) => {
     const { data } = await supabase.from('user_roles').select('role').eq('user_id', userId).single();
-    if (data && data.role) {
-      setRole(data.role as "admin" | "guard");
+    if (data && data.role === "admin") {
+      setRole("admin");
+      if (activeTab === "scanner") setActiveTab("reports");
     } else {
       setRole("guard");
     }
@@ -44,6 +45,7 @@ export default function Home() {
         fetchRole(session.user.id);
       } else {
         setRole("guard");
+        setActiveTab("scanner");
       }
     });
 
@@ -94,7 +96,7 @@ export default function Home() {
       </header>
 
       <main className="h-[calc(100vh-140px)] overflow-y-auto relative z-10">
-        {activeTab === "scanner" && <ScannerTab />}
+        {activeTab === "scanner" && role === "guard" && <ScannerTab />}
         {activeTab === "employees" && <EmployeesTab role={role} />}
         {activeTab === "logs" && role === "admin" && <LogsTab />}
         {activeTab === "reports" && role === "admin" && <ReportsTab />}
@@ -103,10 +105,12 @@ export default function Home() {
       </main>
 
       <nav className="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 flex justify-around p-3 pb-safe shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl">
-        <button onClick={() => setActiveTab("scanner")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "scanner" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
-          <QrCode size={24} className={activeTab === "scanner" ? "stroke-2" : "stroke-2"} />
-          <span className="text-[10px] mt-1 font-semibold">Scan</span>
-        </button>
+        {role === 'guard' && (
+          <button onClick={() => setActiveTab("scanner")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "scanner" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
+            <QrCode size={24} className={activeTab === "scanner" ? "stroke-2" : "stroke-2"} />
+            <span className="text-[10px] mt-1 font-semibold">Scan</span>
+          </button>
+        )}
         
         <button onClick={() => setActiveTab("employees")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "employees" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
           <Users size={24} className={activeTab === "employees" ? "stroke-2" : "stroke-2"} />
