@@ -5,7 +5,7 @@ import { localdb } from "@/lib/localdb";
 import { QRCodeCanvas } from "qrcode.react";
 import { MessageCircle, X, Download, UserPlus, FileText, Truck, Shield } from "lucide-react";
 
-export default function EmployeesTab() {
+export default function EmployeesTab({ role = "admin" }: { role?: "admin" | "guard" }) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -17,6 +17,13 @@ export default function EmployeesTab() {
   const [department, setDepartment] = useState("");
   const [phone, setPhone] = useState("+91 ");
   const [vehiclePlate, setVehiclePlate] = useState("");
+
+  useEffect(() => {
+    if (role === 'guard' && category !== 'Visitor') {
+      setCategory('Visitor');
+    }
+  }, [role, category]);
+
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [groupMembers, setGroupMembers] = useState<string[]>([""]);
   
