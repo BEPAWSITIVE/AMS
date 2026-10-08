@@ -97,7 +97,7 @@ export default function Home() {
         {activeTab === "logs" && role === "admin" && <LogsTab />}
         {activeTab === "reports" && role === "admin" && <ReportsTab />}
         {activeTab === "settings" && <SettingsTab />}
-        {activeTab === "parcels" && <ParcelsTab />}
+        {activeTab === "parcels" && <ParcelsTab role={role} />}
       </main>
 
       <nav className="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 flex justify-around p-3 pb-safe shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl">

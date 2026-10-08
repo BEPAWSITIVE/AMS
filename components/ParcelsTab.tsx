@@ -4,7 +4,7 @@ import { supabase, Parcel } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
 import { X, Package, Search, Camera, Clock, CheckCircle2 } from "lucide-react";
 
-export default function ParcelsTab() {
+export default function ParcelsTab({ role = "guard" }: { role?: "admin" | "guard" }) {
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
