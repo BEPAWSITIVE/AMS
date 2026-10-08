@@ -1,17 +1,48 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, QrCode, ClipboardList, Settings, Zap, RefreshCw } from "lucide-react";
+import { Users, QrCode, ClipboardList, Settings, Zap, RefreshCw, LogOut } from "lucide-react";
 import ScannerTab from '@/components/ScannerTab';
 import EmployeesTab from '@/components/EmployeesTab';
 import LogsTab from '@/components/LogsTab';
 import SettingsTab from '@/components/SettingsTab';
 import ParcelsTab from '@/components/ParcelsTab';
+import AuthScreen from '@/components/AuthScreen';
 import { Package } from 'lucide-react';
 import Image from 'next/image';
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("scanner");
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#F4F9FF]"><div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div></div>;
+  }
+
+  if (!session) {
+    return <AuthScreen />;
+  }
 
   return (
     <>
@@ -24,9 +55,6 @@ export default function Home() {
 
           <div className="w-10 h-10 rounded-lg shadow-sm border border-gray-100 overflow-hidden">
              <Image src="/logo.jpg" alt="Logo" width={40} height={40} className="object-cover" priority />
-
-                
-
           </div>
           <div className="leading-tight">
             <h1 className="text-[17px] font-extrabold text-[#1E293B] tracking-tight">Attendance</h1>
@@ -36,11 +64,8 @@ export default function Home() {
         </div>
         
         <div className="flex space-x-2">
-          <button className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#334155] hover:text-blue-600 transition-colors">
-            <Zap size={18} className="fill-current" />
-          </button>
-          <button className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#334155] hover:text-blue-600 transition-colors">
-            <RefreshCw size={18} />
+          <button onClick={handleLogout} className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-red-500 hover:text-red-600 transition-colors" title="Sign Out">
+            <LogOut size={18} className="ml-0.5" />
           </button>
           <button onClick={() => setActiveTab("settings")} className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#334155] hover:text-blue-600 transition-colors">
             <Settings size={18} className="fill-current" />
@@ -63,7 +88,7 @@ export default function Home() {
         </button>
         <button onClick={() => setActiveTab("employees")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "employees" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
           <Users size={24} className={activeTab === "employees" ? "stroke-2" : "stroke-2"} />
-          <span className="text-[10px] mt-1 font-semibold">Employees</span>
+          <span className="text-[10px] mt-1 font-semibold">Registry</span>
         </button>
         <button onClick={() => setActiveTab("parcels")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "parcels" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
           <Package size={24} className={activeTab === "parcels" ? "stroke-2" : "stroke-2"} />
