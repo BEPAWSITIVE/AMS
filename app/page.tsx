@@ -87,11 +87,7 @@ export default function Home() {
           <button onClick={handleLogout} className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-red-500 hover:text-red-600 transition-colors" title="Sign Out">
             <LogOut size={18} className="ml-0.5" />
           </button>
-          {role === 'admin' && (
-            <button onClick={() => setActiveTab("settings")} className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#334155] hover:text-blue-600 transition-colors">
-              <Settings size={18} className="fill-current" />
-            </button>
-          )}
+
         </div>
       </header>
 
@@ -100,7 +96,7 @@ export default function Home() {
         {activeTab === "employees" && <EmployeesTab role={role} />}
         {activeTab === "logs" && role === "admin" && <LogsTab />}
         {activeTab === "reports" && role === "admin" && <ReportsTab />}
-        {activeTab === "settings" && role === "admin" && <SettingsTab />}
+        {activeTab === "settings" && <SettingsTab />}
         {activeTab === "parcels" && <ParcelsTab />}
       </main>
 
@@ -128,6 +124,11 @@ export default function Home() {
             <span className="text-[10px] mt-1 font-semibold">Reports</span>
           </button>
         )}
+        
+        <button onClick={() => setActiveTab("settings")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "settings" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
+          <Settings size={24} className={activeTab === "settings" ? "stroke-2" : "stroke-2"} />
+          <span className="text-[10px] mt-1 font-semibold">Settings</span>
+        </button>
       </nav>
     </>
   );

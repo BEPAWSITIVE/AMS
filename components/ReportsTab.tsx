@@ -7,6 +7,7 @@ export default function ReportsTab() {
   const [logs, setLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Staff");
 
   useEffect(() => {
     const now = new Date();
@@ -32,7 +33,14 @@ export default function ReportsTab() {
     availableMonths.unshift(selectedMonth); // ensure current month is always an option
   }
 
-  const filteredLogs = logs.filter(l => l.date.startsWith(selectedMonth));
+  const filteredLogs = logs.filter(l => {
+    if (!l.date.startsWith(selectedMonth)) return false;
+    if (l.category === 'Parcel') return false;
+    
+    const cat = l.category || 'Staff';
+    if (selectedCategory === 'All') return true;
+    return cat === selectedCategory;
+  });
 
   let daysInMonth = 30;
   if (selectedMonth) {
@@ -41,8 +49,6 @@ export default function ReportsTab() {
   }
 
   const employeeStats = filteredLogs.reduce((acc: any, log: AttendanceRecord) => {
-    if (log.category === 'Vehicle' || log.category === 'Parcel') return acc;
-    
     if (!acc[log.empId]) {
       acc[log.empId] = {
         name: log.empName,
@@ -95,6 +101,22 @@ export default function ReportsTab() {
           </select>
           <ChevronDown size={14} className="absolute right-3 top-3 text-blue-500 pointer-events-none" />
         </div>
+      </div>
+
+      <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+        {['Staff', 'Volunteer', 'Workexchange', 'Vehicle', 'Visitor', 'All'].map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+              selectedCategory === cat 
+                ? 'bg-gray-800 text-white' 
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
       </div>
 
       {loading ? (
