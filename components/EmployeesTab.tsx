@@ -5,7 +5,7 @@ import { localdb } from "@/lib/localdb";
 import { QRCodeCanvas } from "qrcode.react";
 import { MessageCircle, X, Download, UserPlus, FileText, Truck, Shield } from "lucide-react";
 
-export default function EmployeesTab({ role = "admin" }: { role?: "admin" | "guard" }) {
+export default function EmployeesTab({ role = "admin", initialAiData, onAiDataConsumed }: { role?: "admin" | "guard", initialAiData?: any, onAiDataConsumed?: () => void }) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -78,6 +78,22 @@ export default function EmployeesTab({ role = "admin" }: { role?: "admin" | "gua
     setEmployees(merged);
     setLoading(false);
   }
+
+  
+  useEffect(() => {
+    if (initialAiData) {
+      setCategory('Visitor');
+      generateNewId('Visitor');
+      setName(initialAiData.name || "");
+      setDepartment(initialAiData.address || "");
+      setPhone("+91 ");
+      setVehiclePlate("");
+      setDocumentFile(null);
+      setGroupMembers([initialAiData.id_number || ""]);
+      setShowForm(true);
+      if (onAiDataConsumed) onAiDataConsumed();
+    }
+  }, [initialAiData]);
 
   const generateNewId = (cat: string) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

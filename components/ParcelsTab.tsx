@@ -42,6 +42,16 @@ export default function ParcelsTab({ role = "guard", initialAiData, onAiDataCons
     };
   }, []);
 
+  
+  useEffect(() => {
+    if (initialAiData) {
+      setCompanyName(initialAiData.company_name || "");
+      setTargetPerson(initialAiData.recipient_name || "");
+      setShowForm(true);
+      if (onAiDataConsumed) onAiDataConsumed();
+    }
+  }, [initialAiData]);
+
   async function fetchParcels() {
     let allParcels: Parcel[] = [];
     if (navigator.onLine) {
