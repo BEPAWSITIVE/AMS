@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { supabase, AttendanceRecord, Employee } from "@/lib/supabase";
 import { localdb } from "@/lib/localdb";
-import { CheckCircle2, AlertCircle, X, Truck, Package, Search, ChevronRight } from "lucide-react";
+import { CheckCircle2, AlertCircle, X, Truck, Package, Search, ChevronRight } , Loader2, Sparkles } from "lucide-react";
 
 const playSuccessSound = () => {
   try {
@@ -37,6 +37,7 @@ export default function ScannerTab() {
   const [searchPhone, setSearchPhone] = useState("");
   const [searchResults, setSearchResults] = useState<Employee[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   
   const [vehicleModal, setVehicleModal] = useState<{
@@ -316,6 +317,44 @@ export default function ScannerTab() {
     return () => clearTimeout(timer);
   }, [searchPhone, navigator.onLine]);
 
+  const handleAiScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAiLoading(true);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images: [base64] })
+        });
+        
+        const data = await res.json();
+        setAiLoading(false);
+        
+        if (data.error) {
+          alert("AI Error: " + data.error);
+          return;
+        }
+        
+        if (data.type === 'unknown') {
+          alert("Could not recognize this as an ID or Parcel. Please try again.");
+          return;
+        }
+
+        window.dispatchEvent(new CustomEvent('ai_scan_result', { detail: data }));
+      };
+    } catch (err) {
+      alert("AI Scan failed.");
+      setAiLoading(false);
+    }
+  };
+
   const handleManualSearch = (e: React.FormEvent) => { e.preventDefault(); };
 
   const handleManualSelect = (empId: string) => {
@@ -427,6 +466,27 @@ export default function ScannerTab() {
           <ChevronRight size={20} />
         </div>
       </button>
+        
+        <div className="relative w-full mt-4">
+          <input 
+            type="file" 
+            accept="image/*"
+            capture="environment"
+            onChange={handleAiScan}
+            disabled={aiLoading}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+          />
+          <button 
+            disabled={aiLoading}
+            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-2xl font-bold shadow-[0_10px_20px_-10px_rgba(99,102,241,0.5)] hover:opacity-90 flex items-center justify-center transition-opacity"
+          >
+            {aiLoading ? (
+              <><Loader2 size={20} className="mr-2 animate-spin" /> Analyzing Image...</>
+            ) : (
+              <><Sparkles size={20} className="mr-2" /> Auto-Scan ID or Parcel with AI</>
+            )}
+          </button>
+        </div>
 
             {/* Manual Search Modal */}
       {manualModalOpen && (
