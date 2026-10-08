@@ -1,4 +1,9 @@
-"use client";
+import os
+
+with open('components/ReportsTab.tsx', 'r', encoding='utf-8') as f:
+    code = f.read()
+
+new_code = """"use client";
 import { useState, useEffect } from "react";
 import { supabase, AttendanceRecord } from "@/lib/supabase";
 import { CalendarDays, Clock, Users, FileBarChart2, ChevronDown } from "lucide-react";
@@ -148,3 +153,9 @@ export default function ReportsTab() {
     </div>
   );
 }
+"""
+
+with open('components/ReportsTab.tsx', 'w', encoding='utf-8') as f:
+    f.write(new_code)
+
+print("Done")
