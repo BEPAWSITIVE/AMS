@@ -19,6 +19,8 @@ export default function Home() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<"admin" | "guard">("guard");
+  const [aiVisitorData, setAiVisitorData] = useState<any>(null);
+  const [aiParcelData, setAiParcelData] = useState<any>(null);
 
   const fetchRole = async (userId: string) => {
     const { data } = await supabase.from('user_roles').select('role').eq('user_id', userId).single();
@@ -49,7 +51,23 @@ export default function Home() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    const handleAiScan = (e: any) => {
+      const data = e.detail;
+      if (data.type === 'visitor') {
+        setAiVisitorData(data);
+        setActiveTab('employees');
+      } else if (data.type === 'parcel') {
+        setAiParcelData(data);
+        setActiveTab('parcels');
+      }
+    };
+    
+    window.addEventListener('ai_scan_result', handleAiScan);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('ai_scan_result', handleAiScan);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -93,11 +111,11 @@ export default function Home() {
 
       <main className="h-[calc(100vh-140px)] overflow-y-auto relative z-10">
         {activeTab === "scanner" && role === "guard" && <ScannerTab />}
-        {activeTab === "employees" && <EmployeesTab role={role} />}
+        {activeTab === "employees" && <EmployeesTab role={role} initialAiData={aiVisitorData} onAiDataConsumed={() => setAiVisitorData(null)} />}
         {activeTab === "logs" && role === "admin" && <LogsTab />}
         {activeTab === "reports" && role === "admin" && <ReportsTab />}
         {activeTab === "settings" && <SettingsTab />}
-        {activeTab === "parcels" && role === "guard" && <ParcelsTab role={role} />}
+        {activeTab === "parcels" && role === "guard" && <ParcelsTab role={role} initialAiData={aiParcelData} onAiDataConsumed={() => setAiParcelData(null)} />}
       </main>
 
       <nav className="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 flex justify-around p-3 pb-safe shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl">
