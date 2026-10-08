@@ -90,8 +90,9 @@ export default function EmployeesTab({ role = "admin" }: { role?: "admin" | "gua
   };
 
   const handleOpenForm = () => {
-    setCategory("Staff");
-    generateNewId("Staff");
+    const defaultCat = role === 'guard' ? 'Visitor' : 'Staff';
+    setCategory(defaultCat);
+    generateNewId(defaultCat);
     setName("");
     setDepartment("");
     setPhone("+91 ");
@@ -274,15 +275,17 @@ export default function EmployeesTab({ role = "admin" }: { role?: "admin" | "gua
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Category</label>
               <select 
-                value={category}
-                onChange={handleCategoryChange}
-                className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-              >
-                <option value="Staff">Staff</option>
-                <option value="Visitor">Visitor / Volunteer</option>
-                <option value="Vehicle">Vehicle</option>
-                
-              </select>
+                  value={category}
+                  onChange={handleCategoryChange}
+                  className={`w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium ${role === 'guard' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  disabled={role === 'guard'}
+                >
+                  {role === 'admin' && <option value="Staff">Staff</option>}
+                  <option value="Visitor">Visitor</option>
+                  {role === 'admin' && <option value="Volunteer">Volunteer</option>}
+                  {role === 'admin' && <option value="Workexchange">Work Exchange</option>}
+                  {role === 'admin' && <option value="Vehicle">Vehicle</option>}
+                </select>
             </div>
 
             <div className="flex space-x-3">
