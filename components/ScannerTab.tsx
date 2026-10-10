@@ -386,7 +386,7 @@ export default function ScannerTab() {
         return;
       }
 
-      window.dispatchEvent(new CustomEvent('ai_scan_result', { detail: data }));
+      window.dispatchEvent(new CustomEvent('ai_scan_result', { detail: { ...data, capturedImage: base64 } }));
     } catch (err: any) {
       alert("AI Scan failed: " + err.message);
       setAiLoading(false);
@@ -461,7 +461,7 @@ export default function ScannerTab() {
         return;
       }
 
-      window.dispatchEvent(new CustomEvent('ai_scan_result', { detail: data }));
+      window.dispatchEvent(new CustomEvent('ai_scan_result', { detail: { ...data, capturedImage: base64 } }));
     } catch (err: any) {
       alert("AI Scan failed: " + err.message);
       setAiLoading(false);
@@ -551,14 +551,7 @@ export default function ScannerTab() {
           </div>
         </div>
       
-          {/* AI Snapshot Button */}
-          <button
-            onClick={handleSnapshotScan}
-            disabled={aiLoading}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-16 h-16 bg-white/90 backdrop-blur-md rounded-full shadow-[0_10px_20px_-10px_rgba(56,189,248,0.5)] border-[3px] border-[#38bdf8] flex items-center justify-center active:scale-95 transition-all z-[100] disabled:opacity-50 hover:bg-white"
-          >
-            {aiLoading ? <Loader2 size={28} className="text-[#38bdf8] animate-spin" /> : <Camera size={28} className="text-[#38bdf8]" fill="currentColor" fillOpacity="0.2" />}
-          </button>
+          
 </div>
 
       <button 
@@ -578,6 +571,18 @@ export default function ScannerTab() {
           <ChevronRight size={20} />
         </div>
       </button>
+        {/* AI Snapshot Button (Moved below scanner) */}
+        <button
+          onClick={handleSnapshotScan}
+          disabled={aiLoading}
+          className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 px-4 rounded-[20px] flex items-center justify-center shadow-md z-10 hover:opacity-90 active:scale-95 transition-all mt-4 disabled:opacity-50"
+        >
+          {aiLoading ? (
+            <><Loader2 size={24} className="animate-spin mr-2" /> <span className="font-bold">Analyzing with AI...</span></>
+          ) : (
+            <><Camera size={24} className="mr-2" /> <span className="font-bold">Take Photo & AI Scan</span></>
+          )}
+        </button>
         
 
 

@@ -452,7 +452,20 @@ export default function EmployeesTab({ role = "admin", initialAiData, onAiDataCo
                   />
                 </div>
               </div>
-            )}
+            
+                {category !== 'Parcel' && (
+                  <div className="pt-2">
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Identity ID No. (Aadhar, PAN, etc.)</label>
+                    <input 
+                      type="text" 
+                      value={vehiclePlate} 
+                      onChange={e => setVehiclePlate(e.target.value)}
+                      placeholder="e.g. 1234-5678-9012"
+                      className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase"
+                    />
+                  </div>
+                )}
+)}
 
             {category === 'Visitor' && (
               <>
@@ -550,8 +563,7 @@ export default function EmployeesTab({ role = "admin", initialAiData, onAiDataCo
                     handleOpenForm();
                     setName(draft.name || "");
                     setPhone(draft.phone?.startsWith("+91") ? draft.phone : "+91 " + (draft.phone || ""));
-                    if (category === 'Vehicle') setVehiclePlate(draft.id_number || "");
-                    else setGroupMembers([draft.id_number || ""]);
+                    setVehiclePlate(draft.id_number || ""); // Identity ID / Plate mapping
                     setDepartment(draft.address || "");
                     // Remove from drafts so it's not processed twice
                     setBatchDrafts(prev => prev.filter(d => d._tempId !== draft._tempId));
