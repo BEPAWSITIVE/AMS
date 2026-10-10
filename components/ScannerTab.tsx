@@ -561,16 +561,6 @@ export default function ScannerTab() {
           </button>
 </div>
 
-      {/* Button */}
-      <div className="w-full bg-[#EAF3FF] py-4 px-4 rounded-[20px] flex items-center justify-between shadow-sm z-10 mb-3">
-        <div className="flex items-center">
-          <div className="bg-[#3B82F6] text-white p-2.5 rounded-xl mr-4 shadow-sm">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="3"></rect><rect x="14" y="7" width="3" height="3"></rect><rect x="7" y="14" width="3" height="3"></rect><rect x="14" y="14" width="3" height="3"></rect></svg>
-          </div>
-          <span className="text-[#1E293B] font-bold text-[13px]">Point camera at employee QR badge</span>
-        </div>
-      </div>
-
       <button 
         onClick={() => { setManualModalOpen(true); if (scannerRef.current) { try { scannerRef.current.pause(); } catch(e) {} } }}
         className="w-full bg-white border border-gray-100 py-3.5 px-4 rounded-[20px] flex items-center justify-between shadow-sm z-10 hover:bg-gray-50 active:scale-95 transition-transform"
