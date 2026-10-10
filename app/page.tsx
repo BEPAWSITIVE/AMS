@@ -114,7 +114,7 @@ export default function Home() {
         {activeTab === "employees" && <EmployeesTab role={role} initialAiData={aiVisitorData} onAiDataConsumed={() => setAiVisitorData(null)} />}
         {activeTab === "logs" && role === "admin" && <LogsTab />}
         {activeTab === "reports" && role === "admin" && <ReportsTab />}
-        {activeTab === "settings" && <SettingsTab />}
+        {activeTab === "settings" && role === "admin" && <SettingsTab />}
         {activeTab === "parcels" && role === "guard" && <ParcelsTab role={role} initialAiData={aiParcelData} onAiDataConsumed={() => setAiParcelData(null)} />}
       </main>
 
@@ -145,10 +145,12 @@ export default function Home() {
           </button>
         )}
         
-        <button onClick={() => setActiveTab("settings")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "settings" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
-          <Settings size={24} className={activeTab === "settings" ? "stroke-2" : "stroke-2"} />
-          <span className="text-[10px] mt-1 font-semibold">Settings</span>
-        </button>
+        {role === 'admin' && (
+          <button onClick={() => setActiveTab("settings")} className={`flex flex-col items-center justify-center w-[70px] h-[70px] rounded-[28px] transition-all ${activeTab === "settings" ? "bg-[#EAF3FF] text-[#3B82F6]" : "text-gray-400"}`}>
+            <Settings size={24} className={activeTab === "settings" ? "stroke-2" : "stroke-2"} />
+            <span className="text-[10px] mt-1 font-semibold">Settings</span>
+          </button>
+        )}
       </nav>
     </>
   );
