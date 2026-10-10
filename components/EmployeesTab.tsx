@@ -430,8 +430,9 @@ export default function EmployeesTab({ role = "admin", initialAiData, onAiDataCo
                 />
               </div>
             ) : (
-              <div className="flex space-x-3">
-                <div className="w-1/2">
+              <div className="space-y-4">
+                <div className="flex space-x-3">
+                  <div className="w-1/2">
                   <label className="block text-xs font-bold text-gray-500 mb-1">
                     {category === 'Visitor' ? 'Purpose/Org' : category === 'Parcel' ? 'Tracking # / Desc' : 'Department'}
                   </label>
@@ -465,7 +466,8 @@ export default function EmployeesTab({ role = "admin", initialAiData, onAiDataCo
                     />
                   </div>
                 )}
-)}
+              </div>
+            )}
 
             {category === 'Visitor' && (
               <>
