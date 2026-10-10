@@ -15,7 +15,19 @@ import Image from 'next/image';
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("scanner");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('ams_active_tab');
+      if (saved) return saved;
+    }
+    return "scanner";
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('ams_active_tab', activeTab);
+    }
+  }, [activeTab]);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<"admin" | "guard">("guard");
