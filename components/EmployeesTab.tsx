@@ -75,72 +75,7 @@ export default function EmployeesTab({ role = "admin", initialAiData, onAiDataCo
     }
   };
 
-  const [batchDrafts, setBatchDrafts] = useState<any[]>([]);
-  const [aiLoading, setAiLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        
-        const MAX_DIM = 1200;
-        if (width > height && width > MAX_DIM) {
-          height *= MAX_DIM / width;
-          width = MAX_DIM;
-        } else if (height > MAX_DIM) {
-          width *= MAX_DIM / height;
-          height = MAX_DIM;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        resolve(canvas.toDataURL('image/jpeg', 0.6));
-      };
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const handleBatchAiScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setAiLoading(true);
-    try {
-      const base64 = await compressImage(file);
-      
-      const res = await fetch('/api/analyze-batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: [base64], category: category })
-      });
-      
-      const data = await res.json();
-      setAiLoading(false);
-      
-      if (data.error) {
-        alert("AI Error: " + data.error);
-        return;
-      }
-      
-      if (!data.records || data.records.length === 0) {
-        alert("No records could be extracted from this image.");
-        return;
-      }
-
-      setBatchDrafts(data.records.map((r: any, idx: number) => ({ ...r, _tempId: Date.now() + idx })));
-    } catch (err: any) {
-      alert("AI Scan failed: " + err.message);
-      setAiLoading(false);
-    }
-  };
-
+  
   
   // Form states
   const [category, setCategory] = useState("Staff"); // Staff, Visitor, Vehicle
