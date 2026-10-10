@@ -148,18 +148,101 @@ export default function EmployeesTab({ role = "admin", initialAiData, onAiDataCo
 
   
   useEffect(() => {
+
+
+  
     if (initialAiData) {
+
+
+  
       setCategory('Visitor');
+
+
+  
       generateNewId('Visitor');
+
+
+  
       setName(initialAiData.name || "");
+
+
+  
       setDepartment(initialAiData.address || "");
+
+
+  
       setPhone("+91 ");
-      setVehiclePlate("");
-      setDocumentFile(null);
-      setGroupMembers([initialAiData.id_number || ""]);
+
+
+  
+      setVehiclePlate(initialAiData.id_number || "");
+
+
+  
+      setGroupMembers([""]);
+
+
+  
+      
+
+
+  
+      if (initialAiData.capturedImage) {
+
+
+  
+        fetch(initialAiData.capturedImage)
+
+
+  
+          .then(res => res.arrayBuffer())
+
+
+  
+          .then(buf => {
+
+
+  
+            const file = new File([buf], "ai_scan_capture.jpg", { type: "image/jpeg" });
+
+
+  
+            setDocumentFile(file);
+
+
+  
+          }).catch(err => console.error("Error creating file from image", err));
+
+
+  
+      } else {
+
+
+  
+        setDocumentFile(null);
+
+
+  
+      }
+
+
+  
+      
+
+
+  
       setShowForm(true);
+
+
+  
       if (onAiDataConsumed) onAiDataConsumed();
+
+
+  
     }
+
+
+  
   }, [initialAiData]);
 
   const generateNewId = (cat: string) => {
